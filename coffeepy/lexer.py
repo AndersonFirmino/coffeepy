@@ -5,20 +5,32 @@ from .tokens import (
     AND,
     ARROW,
     AS,
+    AT,
+    BREAK,
+    CATCH,
+    CLASS,
     COLON,
     COMMA,
+    CONTINUE,
     DOT,
+    DOTDOT,
+    DOTDOTDOT,
+    ELLIPSIS,
     ELSE,
     EOF,
     EQ,
     EQEQ,
+    EXTENDS,
     FALSE,
+    FINALLY,
+    FOR,
     FROM,
     GT,
     GTE,
     IDENT,
     IF,
     IMPORT,
+    IN,
     INDENT,
     LBRACE,
     LBRACKET,
@@ -29,16 +41,21 @@ from .tokens import (
     MINUSMINUS,
     MINUS_EQ,
     NEQ,
+    NEW,
     NEWLINE,
     NOT,
     NULL,
     NUMBER,
+    OF,
     OR,
     OUTDENT,
     PERCENT,
     PLUS,
     PLUSPLUS,
     PLUS_EQ,
+    QUESTION,
+    QUESTIONDOT,
+    QUESTIONEQ,
     RBRACE,
     RBRACKET,
     RETURN,
@@ -48,12 +65,18 @@ from .tokens import (
     STAR,
     STARSTAR,
     STRING,
+    SUPER,
+    SWITCH,
     THEN,
+    THIS,
+    THROW,
     TRUE,
+    TRY,
     Token,
     UNDEFINED,
     UNTIL,
     UNLESS,
+    WHEN,
     WHILE,
 )
 
@@ -80,6 +103,22 @@ KEYWORDS = {
     "off": FALSE,
     "null": NULL,
     "undefined": UNDEFINED,
+    "break": BREAK,
+    "continue": CONTINUE,
+    "for": FOR,
+    "in": IN,
+    "of": OF,
+    "class": CLASS,
+    "extends": EXTENDS,
+    "super": SUPER,
+    "this": THIS,
+    "new": NEW,
+    "try": TRY,
+    "catch": CATCH,
+    "finally": FINALLY,
+    "throw": THROW,
+    "switch": SWITCH,
+    "when": WHEN,
 }
 
 
@@ -198,10 +237,27 @@ class Lexer:
             self._add_token(COMMA)
             return
         if ch == ".":
-            self._add_token(DOT)
+            if self._match("."):
+                if self._match("."):
+                    self._add_token(DOTDOTDOT)
+                else:
+                    self._add_token(DOTDOT)
+            else:
+                self._add_token(DOT)
             return
         if ch == ";":
             self._add_token(SEMICOLON)
+            return
+        if ch == "@":
+            self._add_token(AT)
+            return
+        if ch == "?":
+            if self._match("."):
+                self._add_token(QUESTIONDOT)
+            elif self._match("="):
+                self._add_token(QUESTIONEQ)
+            else:
+                self._add_token(QUESTION)
             return
         if ch == "=":
             if self._match("="):
@@ -250,15 +306,21 @@ class Lexer:
             else:
                 self._add_token(STAR)
             return
-        if ch == "/":
-            self._add_token(SLASH)
-            return
         if ch == "%":
             self._add_token(PERCENT)
             return
 
         if ch in {'"', "'"}:
             self._string(ch)
+            return
+
+        if ch == "/":
+            if self._peek() == "/" and self._peek_next() == "/":
+                self._advance()
+                self._advance()
+                self._heregex()
+            else:
+                self._add_token(SLASH)
             return
 
         if ch.isdigit():
@@ -272,6 +334,13 @@ class Lexer:
         raise self._error(f"Unexpected character '{ch}'.")
 
     def _string(self, quote: str) -> None:
+        is_block = (self._peek() == quote and self._peek_next() == quote)
+        if is_block:
+            self._advance()
+            self._advance()
+            self._block_string(quote)
+            return
+        
         chars: list[str] = []
 
         while not self._is_at_end():
@@ -290,6 +359,114 @@ class Lexer:
             chars.append(ch)
 
         raise self._error("Unterminated string literal.")
+
+    def _block_string(self, quote: str) -> None:
+        chars: list[str] = []
+        lines: list[str] = []
+        current_line: list[str] = []
+        
+        while not self._is_at_end():
+            ch = self._advance()
+            
+            if ch == quote and self._peek() == quote and self._peek_next() == quote:
+                self._advance()
+                self._advance()
+                
+                result = "".join(chars)
+                result = self._dedent_block_string(result)
+                self._add_token(STRING, result)
+                return
+
+            if ch == "\\":
+                escaped = self._read_escape()
+                chars.append(escaped)
+                current_line.append(escaped)
+                continue
+
+            chars.append(ch)
+            current_line.append(ch)
+            
+            if ch == "\n":
+                lines.append("".join(current_line))
+                current_line = []
+
+        raise self._error("Unterminated block string.")
+
+    def _dedent_block_string(self, text: str) -> str:
+        lines = text.split("\n")
+        
+        if len(lines) > 0 and lines[0].strip() == "":
+            lines = lines[1:]
+        if len(lines) > 0 and lines[-1].strip() == "":
+            lines = lines[:-1]
+        
+        if not lines:
+            return ""
+        
+        min_indent = float("inf")
+        for line in lines:
+            if line.strip():
+                indent = len(line) - len(line.lstrip())
+                min_indent = min(min_indent, indent)
+        
+        if min_indent == float("inf"):
+            min_indent = 0
+        
+        result_lines = []
+        for line in lines:
+            if line.strip():
+                result_lines.append(line[min_indent:])
+            else:
+                result_lines.append("")
+        
+        return "\n".join(result_lines)
+
+    def _heregex(self) -> None:
+        chars: list[str] = []
+        
+        while not self._is_at_end():
+            ch = self._advance()
+            
+            if ch == "/" and self._peek() == "/" and self._peek_next() == "/":
+                self._advance()
+                self._advance()
+                pattern = "".join(chars)
+                pattern = self._normalize_heregex(pattern)
+                self._add_token(STRING, pattern)
+                return
+
+            if ch == "\\":
+                if not self._is_at_end():
+                    next_ch = self._advance()
+                    chars.append("\\")
+                    chars.append(next_ch)
+                continue
+
+            if ch == "#":
+                while not self._is_at_end() and self._peek() != "\n":
+                    self._advance()
+                continue
+
+            if ch in " \t\n\r":
+                continue
+
+            chars.append(ch)
+
+        raise self._error("Unterminated heregex.")
+
+    def _normalize_heregex(self, pattern: str) -> str:
+        result = []
+        i = 0
+        while i < len(pattern):
+            c = pattern[i]
+            if c == "\\" and i + 1 < len(pattern):
+                result.append(c)
+                result.append(pattern[i + 1])
+                i += 2
+                continue
+            result.append(c)
+            i += 1
+        return "".join(result)
 
     def _read_escape(self) -> str:
         if self._is_at_end():
