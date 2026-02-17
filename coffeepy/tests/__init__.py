@@ -1,0 +1,1 @@
+"""CoffeePy test package."""
