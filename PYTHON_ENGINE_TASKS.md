@@ -10,8 +10,8 @@ Objetivo do produto:
 
 ## Status geral
 
-- Progresso atual: **54%**
-- Restante: **46%**
+- Progresso atual: **61%**
+- Restante: **39%**
 - Referencia oficial restaurada localmente em `references/coffeescript/` para guiar sintaxe e suites.
 
 > Motivo: reset completo do projeto para alinhar com o objetivo correto.
@@ -85,10 +85,10 @@ Objetivo do produto:
 
 ## Proximo sprint (curto prazo)
 
-1. Implementar loops (`while`/`until`) com blocos por indentacao.
-2. Adicionar `return` com expressao multiline e regras de parse mais robustas.
+1. Expandir loops com `break`/`continue` e formas adicionais de condicao.
+2. Adicionar forms de chamada implicita com kwargs e melhorar desambiguacao de argumentos assinados.
 3. Expandir interop Python para colecoes mais ricas (tupla/set e chamadas com kwargs em mais formas).
-4. Consolidar suite negativa de parser/runtime para erros de chamada e atribuicao invalida.
+4. Consolidar suite negativa de parser/runtime para erros de chamada, atribuicao e loop invalido.
 
 ## Entregas bootstrap (inicio efetivo)
 
@@ -113,7 +113,8 @@ Objetivo do produto:
 - Suporte inicial a `return` em funcoes com erro explicito em uso top-level.
 - Cobertura negativa adicionada (indentacao inconsistente, kwargs invalidos, target invalido de atribuicao).
 - Suporte inicial a atribuicao composta e update (`+=`, `-=`, `++`, `--`) em identificador/atributo/indice.
-- Cobertura de testes ampliada para lexer/parser e runtime (44 testes verdes).
+- Suporte inicial a loops `while`/`until` com blocos por indentacao e forma inline com `then`.
+- Cobertura de testes ampliada para lexer/parser e runtime (50 testes verdes).
 
 Comando atual de testes:
 

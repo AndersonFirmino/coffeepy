@@ -206,6 +206,45 @@ obj.n++
 """
         self.assertEqual(self.run_code(source), [3, 4])
 
+    def test_while_loop_with_block(self):
+        source = """x = 0
+total = 0
+while x < 5
+  total += x
+  x++
+total
+"""
+        self.assertEqual(self.run_code(source), 10)
+
+    def test_until_loop_with_block(self):
+        source = """x = 0
+until x >= 4
+  x++
+x
+"""
+        self.assertEqual(self.run_code(source), 4)
+
+    def test_while_then_inline_expression(self):
+        source = """x = 0
+inc = ->
+  x++
+while x < 3 then inc()
+x
+"""
+        self.assertEqual(self.run_code(source), 3)
+
+    def test_while_in_function_with_return(self):
+        source = """first_even = (limit) ->
+  x = 0
+  while x < limit
+    if x % 2 == 0 and x > 0
+      return x
+    x++
+  return -1
+first_even 6
+"""
+        self.assertEqual(self.run_code(source), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

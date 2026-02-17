@@ -25,6 +25,7 @@ from .ast_nodes import (
     Statement,
     Unary,
     UpdateStmt,
+    WhileStmt,
 )
 from .errors import CoffeeParseError
 from .tokens import (
@@ -78,7 +79,9 @@ from .tokens import (
     TRUE,
     Token,
     UNDEFINED,
+    UNTIL,
     UNLESS,
+    WHILE,
 )
 
 
@@ -108,6 +111,14 @@ class Parser:
             if self._check(NEWLINE, SEMICOLON, OUTDENT, EOF):
                 return ReturnStmt(None)
             return ReturnStmt(self._expression())
+
+        if self._match(WHILE, UNTIL):
+            is_until = self._previous().kind == UNTIL
+            condition = self._logical_or()
+            if is_until:
+                condition = Unary(NOT, condition)
+            body = self._parse_clause_body()
+            return WhileStmt(condition, body)
 
         assignment = self._maybe_assignment_or_update_statement()
         if assignment is not None:

@@ -51,6 +51,12 @@ class ReturnStmt(Statement):
 
 
 @dataclass(frozen=True)
+class WhileStmt(Statement):
+    condition: Expression
+    body: Expression
+
+
+@dataclass(frozen=True)
 class AugAssignStmt(Statement):
     target: Expression
     operator: str

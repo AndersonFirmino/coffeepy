@@ -36,6 +36,7 @@ Consulte `PYTHON_ENGINE_TASKS.md` para o plano oficial de reconstrucao.
 - chamadas explicitas (`fn(...)`) e implicitas simples (`fn x`)
 - kwargs em chamada explicita (`fn(a=1, b=2)`)
 - condicionais em expressao (`if ... then ... else ...`, postfix `if/unless`)
+- loops basicos (`while` e `until`) com bloco por indentacao e forma `then`
 - funcoes literais (`x -> expr`, `(x, y) -> expr`, `-> expr`)
 - `return` em corpo de funcao
 - blocos multiline por indentacao para `if` e corpo de funcao
@@ -74,7 +75,7 @@ Testes:
 python -m coffeepy.tests
 ```
 
-Status atual da suite bootstrap: 44 testes passando.
+Status atual da suite bootstrap: 50 testes passando.
 
 ## Referencia de linguagem
 

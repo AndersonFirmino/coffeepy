@@ -38,6 +38,10 @@ This document defines the initial contract for CoffeePy after the Python-first p
     - `x++`, `x--`, `++x`, `--x`
     - supports identifier/attribute/index targets
   - `return` (function body support in current implementation)
+  - loops:
+    - `while condition`
+    - `until condition`
+    - supports indented block body or `then` inline body
   - expression statements
   - indented blocks for:
     - prefix `if/unless`
@@ -76,6 +80,7 @@ This document defines the initial contract for CoffeePy after the Python-first p
 - Function literals close over the lexical environment.
 - `return` inside function literal exits function execution immediately.
 - `return` at top-level raises runtime error.
+- `while` executes while condition is truthy; `until` executes while condition is falsy.
 - Object literals are currently represented as Python `dict`.
 - Array literals are currently represented as Python `list`.
 

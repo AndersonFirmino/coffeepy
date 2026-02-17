@@ -14,6 +14,7 @@ from coffeepy.ast_nodes import (
     IfExpr,
     IndexExpr,
     UpdateStmt,
+    WhileStmt,
 )
 from coffeepy.errors import CoffeeLexerError, CoffeeParseError
 from coffeepy.lexer import Lexer
@@ -118,6 +119,22 @@ else
         program = Parser(Lexer("++obj.count").tokenize()).parse()
         stmt = program.statements[0]
         self.assertIsInstance(stmt, UpdateStmt)
+
+    def test_parser_parses_while_statement(self):
+        source = """while x < 3
+  x++
+"""
+        program = Parser(Lexer(source).tokenize()).parse()
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, WhileStmt)
+
+    def test_parser_parses_until_statement(self):
+        source = """until x >= 3
+  x++
+"""
+        program = Parser(Lexer(source).tokenize()).parse()
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, WhileStmt)
 
 
 if __name__ == "__main__":

@@ -4,4 +4,4 @@ from .interpreter import Interpreter
 
 __all__ = ["Interpreter", "__version__"]
 
-__version__ = "0.5.0-dev"
+__version__ = "0.6.0-dev"

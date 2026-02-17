@@ -52,7 +52,9 @@ from .tokens import (
     TRUE,
     Token,
     UNDEFINED,
+    UNTIL,
     UNLESS,
+    WHILE,
 )
 
 
@@ -63,6 +65,8 @@ KEYWORDS = {
     "return": RETURN,
     "if": IF,
     "unless": UNLESS,
+    "while": WHILE,
+    "until": UNTIL,
     "then": THEN,
     "else": ELSE,
     "and": AND,

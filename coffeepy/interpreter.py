@@ -28,6 +28,7 @@ from .ast_nodes import (
     ReturnStmt,
     Unary,
     UpdateStmt,
+    WhileStmt,
 )
 from .environment import Environment
 from .errors import CoffeeRuntimeError
@@ -148,6 +149,12 @@ class Interpreter:
             new_value = self._apply_update_operator(statement.operator, current)
             self._assign_target(statement.target, new_value)
             return new_value if statement.prefix else current
+
+        if isinstance(statement, WhileStmt):
+            loop_result = None
+            while self._evaluate(statement.condition):
+                loop_result = self._evaluate(statement.body)
+            return loop_result
 
         if isinstance(statement, ReturnStmt):
             if statement.value is None:
