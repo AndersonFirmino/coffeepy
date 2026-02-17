@@ -30,6 +30,13 @@ This document defines the initial contract for CoffeePy after the Python-first p
     - identifier: `x = expression`
     - attribute: `obj.name = expression`
     - index: `arr[0] = expression`, `obj['k'] = expression`
+  - augmented assignment:
+    - `x += expression`
+    - `x -= expression`
+    - supports identifier/attribute/index targets
+  - update operators (statement usage):
+    - `x++`, `x--`, `++x`, `--x`
+    - supports identifier/attribute/index targets
   - `return` (function body support in current implementation)
   - expression statements
   - indented blocks for:
@@ -68,6 +75,7 @@ This document defines the initial contract for CoffeePy after the Python-first p
 - Python builtins are available by identifier fallback (e.g. `len`, `str`, `int`).
 - Function literals close over the lexical environment.
 - `return` inside function literal exits function execution immediately.
+- `return` at top-level raises runtime error.
 - Object literals are currently represented as Python `dict`.
 - Array literals are currently represented as Python `list`.
 

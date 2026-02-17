@@ -51,6 +51,20 @@ class ReturnStmt(Statement):
 
 
 @dataclass(frozen=True)
+class AugAssignStmt(Statement):
+    target: Expression
+    operator: str
+    value: Expression
+
+
+@dataclass(frozen=True)
+class UpdateStmt(Statement):
+    target: Expression
+    operator: str
+    prefix: bool
+
+
+@dataclass(frozen=True)
 class ExprStmt(Statement):
     expression: Expression
 

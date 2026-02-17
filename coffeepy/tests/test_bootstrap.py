@@ -167,6 +167,45 @@ f()
         with self.assertRaises(CoffeeRuntimeError):
             self.run_code("return 3")
 
+    def test_augmented_assignment_identifier(self):
+        source = """x = 10
+x += 5
+x -= 3
+x
+"""
+        self.assertEqual(self.run_code(source), 12)
+
+    def test_augmented_assignment_attribute(self):
+        source = """obj = {count: 1}
+obj.count += 4
+obj.count
+"""
+        self.assertEqual(self.run_code(source), 5)
+
+    def test_augmented_assignment_index(self):
+        source = """arr = [2, 3]
+arr[1] += 7
+arr[1]
+"""
+        self.assertEqual(self.run_code(source), 10)
+
+    def test_postfix_and_prefix_update(self):
+        source = """x = 1
+x++
+++x
+x
+"""
+        self.assertEqual(self.run_code(source), 3)
+
+    def test_update_attribute_and_index(self):
+        source = """obj = {n: 2}
+arr = [5]
+obj.n++
+--arr[0]
+[obj.n, arr[0]]
+"""
+        self.assertEqual(self.run_code(source), [3, 4])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -26,6 +26,8 @@ from .tokens import (
     LT,
     LTE,
     MINUS,
+    MINUSMINUS,
+    MINUS_EQ,
     NEQ,
     NEWLINE,
     NOT,
@@ -35,6 +37,8 @@ from .tokens import (
     OUTDENT,
     PERCENT,
     PLUS,
+    PLUSPLUS,
+    PLUS_EQ,
     RBRACE,
     RBRACKET,
     RETURN,
@@ -219,11 +223,20 @@ class Lexer:
                 self._add_token(GT)
             return
         if ch == "+":
-            self._add_token(PLUS)
+            if self._match("+"):
+                self._add_token(PLUSPLUS)
+            elif self._match("="):
+                self._add_token(PLUS_EQ)
+            else:
+                self._add_token(PLUS)
             return
         if ch == "-":
             if self._match(">"):
                 self._add_token(ARROW)
+            elif self._match("-"):
+                self._add_token(MINUSMINUS)
+            elif self._match("="):
+                self._add_token(MINUS_EQ)
             else:
                 self._add_token(MINUS)
             return

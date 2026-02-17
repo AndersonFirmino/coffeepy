@@ -10,6 +10,7 @@ from typing import Any, cast
 from .ast_nodes import (
     ArrayLiteral,
     AssignStmt,
+    AugAssignStmt,
     Binary,
     BlockExpr,
     Call,
@@ -26,6 +27,7 @@ from .ast_nodes import (
     Program,
     ReturnStmt,
     Unary,
+    UpdateStmt,
 )
 from .environment import Environment
 from .errors import CoffeeRuntimeError
@@ -39,11 +41,15 @@ from .tokens import (
     LT,
     LTE,
     MINUS,
+    MINUSMINUS,
+    MINUS_EQ,
     NEQ,
     NOT,
     OR,
     PERCENT,
     PLUS,
+    PLUSPLUS,
+    PLUS_EQ,
     SLASH,
     STAR,
     STARSTAR,
@@ -130,6 +136,19 @@ class Interpreter:
             self._assign_target(statement.target, value)
             return value
 
+        if isinstance(statement, AugAssignStmt):
+            current = self._read_target(statement.target)
+            right = self._evaluate(statement.value)
+            new_value = self._apply_augmented_operator(statement.operator, current, right)
+            self._assign_target(statement.target, new_value)
+            return new_value
+
+        if isinstance(statement, UpdateStmt):
+            current = self._read_target(statement.target)
+            new_value = self._apply_update_operator(statement.operator, current)
+            self._assign_target(statement.target, new_value)
+            return new_value if statement.prefix else current
+
         if isinstance(statement, ReturnStmt):
             if statement.value is None:
                 raise _ReturnSignal(None)
@@ -191,6 +210,24 @@ class Interpreter:
 
         raise CoffeeRuntimeError("Invalid assignment target.")
 
+    def _read_target(self, target):
+        if isinstance(target, Identifier):
+            return self.environment.get(target.name)
+
+        if isinstance(target, GetAttr):
+            container = self._evaluate(target.target)
+            return self._get_attr_value(container, target.name)
+
+        if isinstance(target, IndexExpr):
+            container = self._evaluate(target.target)
+            index = self._evaluate(target.index)
+            try:
+                return container[index]
+            except Exception as exc:
+                raise CoffeeRuntimeError(f"Index read failed: {exc}") from exc
+
+        raise CoffeeRuntimeError("Invalid assignment target.")
+
     @staticmethod
     def _set_attr(container, name: str, value) -> None:
         if isinstance(container, dict):
@@ -201,6 +238,36 @@ class Interpreter:
             setattr(container, name, value)
         except Exception as exc:
             raise CoffeeRuntimeError(f"Attribute assignment failed: {exc}") from exc
+
+    @staticmethod
+    def _get_attr_value(container, name: str):
+        if isinstance(container, dict) and name in container:
+            return container[name]
+        if hasattr(container, name):
+            return getattr(container, name)
+        raise CoffeeRuntimeError(f"Attribute '{name}' not found.")
+
+    def _apply_augmented_operator(self, operator_name: str, left, right):
+        try:
+            if operator_name == PLUS_EQ:
+                return left + right
+            if operator_name == MINUS_EQ:
+                return left - right
+        except Exception as exc:
+            raise CoffeeRuntimeError(f"Augmented assignment failed: {exc}") from exc
+
+        raise CoffeeRuntimeError("Unsupported augmented assignment operator.")
+
+    def _apply_update_operator(self, operator_name: str, value):
+        try:
+            if operator_name == PLUSPLUS:
+                return value + 1
+            if operator_name == MINUSMINUS:
+                return value - 1
+        except Exception as exc:
+            raise CoffeeRuntimeError(f"Update operator failed: {exc}") from exc
+
+        raise CoffeeRuntimeError("Unsupported update operator.")
 
     def _evaluate(self, expression):
         if isinstance(expression, Literal):
@@ -252,11 +319,7 @@ class Interpreter:
 
         if isinstance(expression, GetAttr):
             target = self._evaluate(expression.target)
-            if isinstance(target, dict) and expression.name in target:
-                return target[expression.name]
-            if hasattr(target, expression.name):
-                return getattr(target, expression.name)
-            raise CoffeeRuntimeError(f"Attribute '{expression.name}' not found.")
+            return self._get_attr_value(target, expression.name)
 
         if isinstance(expression, IndexExpr):
             target = self._evaluate(expression.target)

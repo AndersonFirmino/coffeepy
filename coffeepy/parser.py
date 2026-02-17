@@ -3,6 +3,7 @@ from __future__ import annotations
 from .ast_nodes import (
     ArrayLiteral,
     AssignStmt,
+    AugAssignStmt,
     Binary,
     BlockExpr,
     Call,
@@ -23,6 +24,7 @@ from .ast_nodes import (
     ReturnStmt,
     Statement,
     Unary,
+    UpdateStmt,
 )
 from .errors import CoffeeParseError
 from .tokens import (
@@ -50,6 +52,8 @@ from .tokens import (
     LT,
     LTE,
     MINUS,
+    MINUSMINUS,
+    MINUS_EQ,
     NEQ,
     NEWLINE,
     NOT,
@@ -59,6 +63,8 @@ from .tokens import (
     OUTDENT,
     PERCENT,
     PLUS,
+    PLUSPLUS,
+    PLUS_EQ,
     RBRACE,
     RBRACKET,
     RETURN,
@@ -103,25 +109,43 @@ class Parser:
                 return ReturnStmt(None)
             return ReturnStmt(self._expression())
 
-        assignment = self._maybe_assignment_statement()
+        assignment = self._maybe_assignment_or_update_statement()
         if assignment is not None:
             return assignment
 
         return ExprStmt(self._expression())
 
-    def _maybe_assignment_statement(self) -> AssignStmt | None:
+    def _maybe_assignment_or_update_statement(self) -> Statement | None:
+        checkpoint = self.current
+
+        if self._match(PLUSPLUS, MINUSMINUS):
+            operator = self._previous().kind
+            target = self._parse_assignment_target()
+            if target is None:
+                raise self._error(self._peek(), "Expected assignment target after update operator.")
+            return UpdateStmt(target, operator, prefix=True)
+
         checkpoint = self.current
         target = self._parse_assignment_target()
         if target is None:
             self.current = checkpoint
             return None
 
-        if not self._match(EQ):
-            self.current = checkpoint
-            return None
+        if self._match(EQ):
+            value = self._expression()
+            return AssignStmt(target, value)
 
-        value = self._expression()
-        return AssignStmt(target, value)
+        if self._match(PLUS_EQ, MINUS_EQ):
+            operator = self._previous().kind
+            value = self._expression()
+            return AugAssignStmt(target, operator, value)
+
+        if self._match(PLUSPLUS, MINUSMINUS):
+            operator = self._previous().kind
+            return UpdateStmt(target, operator, prefix=False)
+
+        self.current = checkpoint
+        return None
 
     def _parse_assignment_target(self) -> Expression | None:
         if not self._match(IDENT):

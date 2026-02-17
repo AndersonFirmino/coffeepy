@@ -10,8 +10,8 @@ Objetivo do produto:
 
 ## Status geral
 
-- Progresso atual: **46%**
-- Restante: **54%**
+- Progresso atual: **54%**
+- Restante: **46%**
 - Referencia oficial restaurada localmente em `references/coffeescript/` para guiar sintaxe e suites.
 
 > Motivo: reset completo do projeto para alinhar com o objetivo correto.
@@ -85,10 +85,10 @@ Objetivo do produto:
 
 ## Proximo sprint (curto prazo)
 
-1. Implementar atribuicao composta e update (`+=`, `-=`, `++`, `--`) em targets suportados.
-2. Adicionar chamada implicita com kwargs e melhorar desambiguacao de argumentos assinados.
-3. Avancar statement-level (mais forms de `if/unless`, preparacao para `while`).
-4. Expandir testes negativos de parser/runtime para cobertura de erros de interop Python.
+1. Implementar loops (`while`/`until`) com blocos por indentacao.
+2. Adicionar `return` com expressao multiline e regras de parse mais robustas.
+3. Expandir interop Python para colecoes mais ricas (tupla/set e chamadas com kwargs em mais formas).
+4. Consolidar suite negativa de parser/runtime para erros de chamada e atribuicao invalida.
 
 ## Entregas bootstrap (inicio efetivo)
 
@@ -112,7 +112,8 @@ Objetivo do produto:
 - Suporte inicial a atribuicao em atributo/index (`obj.x = ...`, `arr[0] = ...`).
 - Suporte inicial a `return` em funcoes com erro explicito em uso top-level.
 - Cobertura negativa adicionada (indentacao inconsistente, kwargs invalidos, target invalido de atribuicao).
-- Cobertura de testes ampliada para lexer/parser e runtime (36 testes verdes).
+- Suporte inicial a atribuicao composta e update (`+=`, `-=`, `++`, `--`) em identificador/atributo/indice.
+- Cobertura de testes ampliada para lexer/parser e runtime (44 testes verdes).
 
 Comando atual de testes:
 

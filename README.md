@@ -28,6 +28,7 @@ Consulte `PYTHON_ENGINE_TASKS.md` para o plano oficial de reconstrucao.
 
 - `import` e `from ... import ...` basicos
 - atribuicoes em identificador, atributo e indice (`x = ...`, `obj.a = ...`, `arr[0] = ...`)
+- atribuicoes compostas e update (`+=`, `-=`, `++`, `--`)
 - aritmetica basica (`+`, `-`, `*`, `/`, `%`, `**`)
 - comparacoes (`<`, `<=`, `>`, `>=`, `==`, `!=`) e logica (`and`, `or`, `not`)
 - acesso por atributo (`obj.prop`)
@@ -73,7 +74,7 @@ Testes:
 python -m coffeepy.tests
 ```
 
-Status atual da suite bootstrap: 36 testes passando.
+Status atual da suite bootstrap: 44 testes passando.
 
 ## Referencia de linguagem
 

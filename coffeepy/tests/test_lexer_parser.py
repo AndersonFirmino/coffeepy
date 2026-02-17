@@ -3,7 +3,18 @@ from __future__ import annotations
 import unittest
 from typing import cast
 
-from coffeepy.ast_nodes import AssignStmt, Call, ExprStmt, FunctionLiteral, GetAttr, Identifier, IfExpr, IndexExpr
+from coffeepy.ast_nodes import (
+    AssignStmt,
+    AugAssignStmt,
+    Call,
+    ExprStmt,
+    FunctionLiteral,
+    GetAttr,
+    Identifier,
+    IfExpr,
+    IndexExpr,
+    UpdateStmt,
+)
 from coffeepy.errors import CoffeeLexerError, CoffeeParseError
 from coffeepy.lexer import Lexer
 from coffeepy.parser import Parser
@@ -92,6 +103,21 @@ else
     def test_parser_rejects_invalid_assignment_target(self):
         with self.assertRaises(CoffeeParseError):
             Parser(Lexer("f(1) = 2").tokenize()).parse()
+
+    def test_parser_parses_augmented_assignment(self):
+        program = Parser(Lexer("x += 1").tokenize()).parse()
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, AugAssignStmt)
+
+    def test_parser_parses_postfix_update(self):
+        program = Parser(Lexer("arr[0]++").tokenize()).parse()
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, UpdateStmt)
+
+    def test_parser_parses_prefix_update(self):
+        program = Parser(Lexer("++obj.count").tokenize()).parse()
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, UpdateStmt)
 
 
 if __name__ == "__main__":
