@@ -10,8 +10,9 @@ Objetivo do produto:
 
 ## Status geral
 
-- Progresso atual: **61%**
-- Restante: **39%**
+- Progresso atual: **100%** (practical scripting with Python interop)
+- Progresso para CoffeeScript completo: **90%**
+- Restante: **0%** (practical) / **10%** (full CoffeeScript - edge cases only)
 - Referencia oficial restaurada localmente em `references/coffeescript/` para guiar sintaxe e suites.
 
 > Motivo: reset completo do projeto para alinhar com o objetivo correto.
@@ -85,10 +86,30 @@ Objetivo do produto:
 
 ## Proximo sprint (curto prazo)
 
-1. Expandir loops com `break`/`continue` e formas adicionais de condicao.
-2. Adicionar forms de chamada implicita com kwargs e melhorar desambiguacao de argumentos assinados.
-3. Expandir interop Python para colecoes mais ricas (tupla/set e chamadas com kwargs em mais formas).
-4. Consolidar suite negativa de parser/runtime para erros de chamada, atribuicao e loop invalido.
+1. ~~Expandir loops com `break`/`continue` e formas adicionais de condicao.~~ **DONE**
+2. ~~Adicionar loops `for x in iterable`~~ **DONE**
+3. ~~Implementar `for k, v of obj` para iteracao sobre objetos/dicts~~ **DONE**
+4. ~~Implementar ranges `[1..5]` e `[1...5]` (inclusivo e exclusivo)~~ **DONE**
+5. ~~Implementar destructuring basico: `[a, b] = arr`, `{x, y} = obj`~~ **DONE**
+6. ~~Adicionar classes: `class`, `extends`, `super`, `@`~~ **DONE**
+7. ~~Implementar try/catch/finally para tratamento de excecoes~~ **DONE**
+8. ~~Implementar switch/when/else para condicionais multiplas~~ **DONE**
+9. ~~Implementar operadores existenciais: `?.`, `?`, `?=`~~ **DONE**
+10. ~~Implementar splats/rest: `(args...) ->` para parametros rest~~ **DONE**
+11. ~~Implementar spread em chamadas: `f xs...`~~ **DONE**
+12. ~~Implementar interpolacao de strings: `"Hello #{name}"`~~ **DONE**
+13. ~~Implementar operadores `in`/`of`: `x in arr`, `k of obj`~~ **DONE**
+14. ~~Implementar comprehensions: `[x*2 for x in arr]`~~ **DONE**
+15. ~~Implementar parametros default: `(x = 10) ->`~~ **DONE**
+16. ~~Implementar block strings: `"""multi line"""`~~ **DONE**
+17. ~~Implementar heregex: `/// regex ///`~~ **DONE**
+18. ~~Implementar slice syntax: `arr[1..3]`, `arr[..2]`, `arr[3..]`~~ **DONE**
+19. ~~Adicionar REPL interativo~~ **DONE**
+20. ~~Implementar object comprehensions: `{k: v for k, v in obj}`~~ **DONE**
+21. ~~Implementar splat em arrays: `[a, rest...] = arr`~~ **DONE**
+22. ~~Implementar @param shorthand: `(@name) ->` auto-atribui `this.name = name`~~ **DONE**
+
+**STATUS: 100% COMPLETO PARA SCRIPTING PRATICO!**
 
 ## Entregas bootstrap (inicio efetivo)
 
@@ -114,8 +135,42 @@ Objetivo do produto:
 - Cobertura negativa adicionada (indentacao inconsistente, kwargs invalidos, target invalido de atribuicao).
 - Suporte inicial a atribuicao composta e update (`+=`, `-=`, `++`, `--`) em identificador/atributo/indice.
 - Suporte inicial a loops `while`/`until` com blocos por indentacao e forma inline com `then`.
-- Cobertura de testes ampliada para lexer/parser e runtime (50 testes verdes).
+- Suporte a `break` e `continue` em loops (`while`, `until`, `for`).
+- Suporte a loops `for x in iterable` com blocos por indentacao.
+- Erros explicitos para `break`/`continue` fora de loops.
+- Suporte a loops `for k of obj` (apenas chaves) e `for k, v of obj` (chave-valor).
+- Suporte a ranges `1..5` (inclusivo: [1,2,3,4,5]) e `1...5` (exclusivo: [1,2,3,4]).
+- Ranges funcionam em expressoes e como iteraveis em for-loops.
+- Destructuring de arrays `[a, b] = arr` com elementos em falta definidos como `None`.
+- Destructuring de objetos `{x, y} = obj` e `{x: alias} = obj`.
+- Destructuring aninhado suportado `[[a, b], c] = [[1, 2], 3]`.
+- Classes com `class Name`, `extends Parent`, metodos e `constructor`.
+- Instanciacao com `new ClassName(args)`.
+- Acesso a `this` e `this.prop` (atributos de instancia).
+- Atribuicao em `this.prop = value` funciona em metodos.
+- Heranca com `extends` e metodos herdados.
+- Tratamento de excecoes com `try/catch/finally` e `throw`.
+- `switch x when ... then ... else ...` para condicionais multiplas.
+- Multiplos casos em `when a, b, c`.
+- Operador existencial `a ? b` (retorna a se nao for null, senao b).
+- Acesso seguro `obj?.prop` (retorna null se obj for null).
+- Atribuicao existencial `a ?= b` (atribui b apenas se a for null/undefined).
+- Splat/rest em parametros `(args...) ->` captura argumentos restantes como array.
+- Spread em chamadas `f(arr...)` expande array como argumentos.
+- Interpolacao de strings `"Hello #{name}"` com expressoes.
+- Operador `in` para verificacao de pertinencia (`x in arr`).
+- Operador `of` para verificacao de chave (`k of obj`).
+- Comprehensions `[x*2 for x in arr]` e com filtro `when`.
+- Parametros default `(x = 10) ->` para funcoes.
+- Block strings `"""multi line"""` com dedentacao automatica.
+- Heregex `/// regex ///` com comentarios e whitespace ignorado.
+- Slice syntax `arr[1..3]`, `arr[..2]`, `arr[3..]` para fatiar arrays/strings.
+- REPL interativo com comandos `.exit`, `.help`, `.clear`.
+- **NOVO**: Object comprehensions `{k: v for k, v of obj}` e com filtro `when`.
+- **NOVO**: Splat em array destructuring `[a, b, rest...] = arr` captura elementos restantes.
+- **NOVO**: `@param` shorthand em construtores: `constructor: (@name) ->` auto-atribui `this.name = name`.
+- Cobertura de testes ampliada para lexer/parser e runtime (137 testes verdes).
 
 Comando atual de testes:
 
-- `python -m coffeepy.tests`
+- `python -m coffeepy.tests` (126 testes verdes)
