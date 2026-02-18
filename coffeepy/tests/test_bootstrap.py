@@ -1197,6 +1197,25 @@ a or b or c
 """
         self.assertTrue(self.run_code(source))
 
+    def test_multiple_assignment(self):
+        source = """a = b = c = 10
+[a, b, c]
+"""
+        self.assertEqual(self.run_code(source), [10, 10, 10])
+
+    def test_multiple_assignment_with_object(self):
+        source = """obj = {}
+obj.x = obj.y = 5
+[obj.x, obj.y]
+"""
+        self.assertEqual(self.run_code(source), [5, 5])
+
+    def test_multiple_assignment_chain(self):
+        source = """a = b = c = d = 1
+a + b + c + d
+"""
+        self.assertEqual(self.run_code(source), 4)
+
 
 if __name__ == "__main__":
     unittest.main()
