@@ -35,6 +35,7 @@ from .ast_nodes import (
     InterpolatedString,
     Literal,
     LogicalAssignStmt,
+    MultiAssignStmt,
     NewExpr,
     ObjectComprehensionExpr,
     ObjectDestructuring,
@@ -235,8 +236,21 @@ class Parser:
             return None
 
         if self._match(EQ):
+            targets = [target]
+            while True:
+                inner_checkpoint = self.current
+                next_target = self._parse_assignment_target()
+                if next_target is None:
+                    self.current = inner_checkpoint
+                    break
+                if not self._match(EQ):
+                    self.current = inner_checkpoint
+                    break
+                targets.append(next_target)
             value = self._expression()
-            return AssignStmt(target, value)
+            if len(targets) == 1:
+                return AssignStmt(targets[0], value)
+            return MultiAssignStmt(targets, value)
 
         if self._match(QUESTIONEQ):
             value = self._expression()
