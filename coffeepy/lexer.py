@@ -7,11 +7,13 @@ from .tokens import (
     AS,
     AT,
     BREAK,
+    BY,
     CATCH,
     CLASS,
     COLON,
     COMMA,
     CONTINUE,
+    DO,
     DOT,
     DOTDOT,
     DOTDOTDOT,
@@ -21,10 +23,12 @@ from .tokens import (
     EQ,
     EQEQ,
     EXTENDS,
+    FAT_ARROW,
     FALSE,
     FINALLY,
     FOR,
     FROM,
+    GET,
     GT,
     GTE,
     IDENT,
@@ -61,6 +65,7 @@ from .tokens import (
     RETURN,
     RPAREN,
     SEMICOLON,
+    SET,
     SLASH,
     STAR,
     STARSTAR,
@@ -78,6 +83,7 @@ from .tokens import (
     UNLESS,
     WHEN,
     WHILE,
+    YIELD,
 )
 
 
@@ -119,6 +125,9 @@ KEYWORDS = {
     "throw": THROW,
     "switch": SWITCH,
     "when": WHEN,
+    "do": DO,
+    "by": BY,
+    "yield": YIELD,
 }
 
 
@@ -259,12 +268,6 @@ class Lexer:
             else:
                 self._add_token(QUESTION)
             return
-        if ch == "=":
-            if self._match("="):
-                self._add_token(EQEQ)
-            else:
-                self._add_token(EQ)
-            return
         if ch == "!":
             if self._match("="):
                 self._add_token(NEQ)
@@ -299,6 +302,14 @@ class Lexer:
                 self._add_token(MINUS_EQ)
             else:
                 self._add_token(MINUS)
+            return
+        if ch == "=":
+            if self._match(">"):
+                self._add_token(FAT_ARROW)
+            elif self._match("="):
+                self._add_token(EQEQ)
+            else:
+                self._add_token(EQ)
             return
         if ch == "*":
             if self._match("*"):
