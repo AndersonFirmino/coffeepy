@@ -86,6 +86,42 @@ class RangeLiteral(Expression):
     start: Expression
     end: Expression
     exclusive: bool
+    step: Expression | None = None
+
+
+@dataclass(frozen=True)
+class DoExpr(Expression):
+    body: Expression
+
+
+@dataclass(frozen=True)
+class YieldExpr(Expression):
+    value: Expression | None
+
+
+@dataclass(frozen=True)
+class ChainedComparison(Expression):
+    operands: list[Expression]
+    operators: list[str]
+
+
+@dataclass(frozen=True)
+class ImportAllStmt(Statement):
+    module: str
+    alias: str | None
+
+
+@dataclass(frozen=True)
+class GetterDecl(Statement):
+    name: str
+    body: Expression
+
+
+@dataclass(frozen=True)
+class SetterDecl(Statement):
+    name: str
+    param: str
+    body: Expression
 
 
 @dataclass(frozen=True)
@@ -169,6 +205,7 @@ class FunctionLiteral(Expression):
     splat_param: bool = False
     defaults: dict = None
     this_params: tuple = ()
+    bound: bool = False
     
     def __post_init__(self):
         if self.defaults is None:
@@ -207,7 +244,7 @@ class ArrayDestructuring(Expression):
 
 @dataclass(frozen=True)
 class ObjectDestructuring(Expression):
-    properties: list[tuple[str, Expression | None]]
+    properties: list[tuple[str, Expression | None, Expression | None]]  # (key, alias, default)
 
 
 @dataclass(frozen=True)
