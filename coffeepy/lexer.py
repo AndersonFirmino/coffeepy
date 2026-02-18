@@ -3,6 +3,8 @@ from __future__ import annotations
 from .errors import CoffeeLexerError
 from .tokens import (
     AND,
+    ANDAND,
+    ANDAND_EQ,
     ARROW,
     AS,
     AT,
@@ -36,6 +38,8 @@ from .tokens import (
     IMPORT,
     IN,
     INDENT,
+    IS,
+    ISNT,
     LBRACE,
     LBRACKET,
     LPAREN,
@@ -52,11 +56,14 @@ from .tokens import (
     NUMBER,
     OF,
     OR,
+    OROR,
+    OROR_EQ,
     OUTDENT,
     PERCENT,
     PLUS,
     PLUSPLUS,
     PLUS_EQ,
+    PROTO,
     QUESTION,
     QUESTIONDOT,
     QUESTIONEQ,
@@ -101,6 +108,8 @@ KEYWORDS = {
     "and": AND,
     "or": OR,
     "not": NOT,
+    "is": IS,
+    "isnt": ISNT,
     "true": TRUE,
     "false": FALSE,
     "yes": TRUE,
@@ -240,7 +249,10 @@ class Lexer:
             self._add_token(RBRACE)
             return
         if ch == ":":
-            self._add_token(COLON)
+            if self._match(":"):
+                self._add_token(PROTO)
+            else:
+                self._add_token(COLON)
             return
         if ch == ",":
             self._add_token(COMMA)
@@ -267,6 +279,24 @@ class Lexer:
                 self._add_token(QUESTIONEQ)
             else:
                 self._add_token(QUESTION)
+            return
+        if ch == "&":
+            if self._match("&"):
+                if self._match("="):
+                    self._add_token(ANDAND_EQ)
+                else:
+                    self._add_token(ANDAND)
+            else:
+                raise self._error("Unexpected character '&'.")
+            return
+        if ch == "|":
+            if self._match("|"):
+                if self._match("="):
+                    self._add_token(OROR_EQ)
+                else:
+                    self._add_token(OROR)
+            else:
+                raise self._error("Unexpected character '|'.")
             return
         if ch == "!":
             if self._match("="):
@@ -330,6 +360,8 @@ class Lexer:
                 self._advance()
                 self._advance()
                 self._heregex()
+            elif self._peek() not in (" ", "\t", "\n", "\0") and self._peek() != "/":
+                self._regex()
             else:
                 self._add_token(SLASH)
             return
@@ -464,6 +496,34 @@ class Lexer:
             chars.append(ch)
 
         raise self._error("Unterminated heregex.")
+
+    def _regex(self) -> None:
+        chars: list[str] = []
+        
+        while not self._is_at_end():
+            ch = self._advance()
+            
+            if ch == "/":
+                flags = ""
+                while not self._is_at_end() and self._peek() in "gimsuy":
+                    flags += self._advance()
+                pattern = "".join(chars)
+                self._add_token(STRING, ("regex", pattern, flags))
+                return
+
+            if ch == "\\":
+                if not self._is_at_end():
+                    next_ch = self._advance()
+                    chars.append("\\")
+                    chars.append(next_ch)
+                continue
+
+            if ch == "\n":
+                raise self._error("Unterminated regex literal.")
+
+            chars.append(ch)
+
+        raise self._error("Unterminated regex literal.")
 
     def _normalize_heregex(self, pattern: str) -> str:
         result = []
