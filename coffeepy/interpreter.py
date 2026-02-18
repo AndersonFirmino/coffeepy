@@ -37,12 +37,14 @@ from .ast_nodes import (
     IndexExpr,
     InterpolatedString,
     Literal,
+    LogicalAssignStmt,
     NewExpr,
     ObjectComprehensionExpr,
     ObjectDestructuring,
     ObjectLiteral,
     OfExpr,
     Program,
+    ProtoAccessExpr,
     RangeLiteral,
     ReturnStmt,
     SafeAccessExpr,
@@ -66,6 +68,7 @@ from .lexer import Lexer
 from .parser import Parser
 from .tokens import (
     AND,
+    ANDAND,
     EQEQ,
     GT,
     GTE,
@@ -77,6 +80,7 @@ from .tokens import (
     NEQ,
     NOT,
     OR,
+    OROR,
     PERCENT,
     PLUS,
     PLUSPLUS,
@@ -344,6 +348,22 @@ class Interpreter:
                 value = self._evaluate(statement.value)
                 self._assign_target(statement.target, value)
                 return value
+
+        if isinstance(statement, LogicalAssignStmt):
+            current = self._read_target(statement.target)
+            if statement.operator == OROR:
+                if not current:
+                    value = self._evaluate(statement.value)
+                    self._assign_target(statement.target, value)
+                    return value
+                return current
+            elif statement.operator == ANDAND:
+                if current:
+                    value = self._evaluate(statement.value)
+                    self._assign_target(statement.target, value)
+                    return value
+                return current
+            raise CoffeeRuntimeError(f"Unknown logical assignment operator: {statement.operator}")
 
         if isinstance(statement, WhileStmt):
             loop_result = None
@@ -629,7 +649,19 @@ class Interpreter:
 
     def _evaluate(self, expression):
         if isinstance(expression, Literal):
-            return expression.value
+            value = expression.value
+            if isinstance(value, tuple) and len(value) == 3 and value[0] == "regex":
+                import re
+                pattern, flags_str = value[1], value[2]
+                flags = 0
+                if "i" in flags_str:
+                    flags |= re.IGNORECASE
+                if "m" in flags_str:
+                    flags |= re.MULTILINE
+                if "s" in flags_str:
+                    flags |= re.DOTALL
+                return re.compile(pattern, flags)
+            return value
 
         if isinstance(expression, BlockExpr):
             block_result = None
@@ -808,6 +840,20 @@ class Interpreter:
             if target is None:
                 return None
             return self._get_attr_value(target, expression.name)
+
+        if isinstance(expression, ProtoAccessExpr):
+            if expression.target is None:
+                raise CoffeeRuntimeError("Prototype access '::' requires a target (e.g., Array::map).")
+            target = self._evaluate(expression.target)
+            if hasattr(target, '_find_method'):
+                method = target._find_method(expression.name)
+                if method:
+                    return method
+            if hasattr(target, 'methods') and expression.name in target.methods:
+                return target.methods[expression.name]
+            if hasattr(target, '__class__'):
+                return self._get_attr_value(target.__class__, expression.name)
+            raise CoffeeRuntimeError(f"Cannot access prototype of non-class value.")
 
         if isinstance(expression, SplatExpr):
             return self._evaluate(expression.value)
