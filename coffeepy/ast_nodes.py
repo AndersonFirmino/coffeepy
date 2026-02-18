@@ -46,6 +46,12 @@ class AssignStmt(Statement):
 
 
 @dataclass(frozen=True)
+class MultiAssignStmt(Statement):
+    targets: list[Expression]
+    value: Expression
+
+
+@dataclass(frozen=True)
 class ReturnStmt(Statement):
     value: Expression | None
 
