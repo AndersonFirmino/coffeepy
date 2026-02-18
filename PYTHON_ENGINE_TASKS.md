@@ -10,9 +10,9 @@ Objetivo do produto:
 
 ## Status geral
 
-- Progresso atual: **95%** (full CoffeeScript compatibility)
-- Restante: **5%** (edge cases e features avancadas)
-- Testes: **154 testes passando**
+- Progresso atual: **98%** (full CoffeeScript compatibility)
+- Restante: **2%** (edge cases e features avancadas)
+- Testes: **171 testes passando**
 - Referencia oficial restaurada localmente em `references/coffeescript/` para guiar sintaxe e suites.
 
 ## Regras do projeto (travadas)
@@ -32,12 +32,12 @@ Objetivo do produto:
 - [x] Suite de testes Python-first robusta.
 - [ ] Documentacao de linguagem e limites publicada.
 
-## Features Implementadas (95%)
+## Features Implementadas (98%)
 
 ### Core Language
 - [x] Variables, assignments, scoping
 - [x] Arithmetic operators: `+`, `-`, `*`, `/`, `%`, `**`
-- [x] Comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`
+- [x] Comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`, `is`, `isnt`
 - [x] Logical: `and`, `or`, `not`
 - [x] Chained comparisons: `1 < x < 10`
 
@@ -72,9 +72,11 @@ Objetivo do produto:
 - [x] Constructor, methods
 - [x] `this` and `@` syntax
 - [x] Inheritance
+- [x] Prototype access: `Class::method`
 
 ### Operators
 - [x] Existential: `a ? b`, `obj?.prop`, `a ?= b`
+- [x] Logical assignment: `a ||= b`, `a &&= b`
 - [x] Membership: `x in arr`, `k of obj`
 - [x] Ranges: `1..5` (inclusive), `1...5` (exclusive)
 - [x] Range with step: `1..10 by 2`
@@ -87,6 +89,10 @@ Objetivo do produto:
 - [x] Heregex: `/// regex ///`
 - [x] Escape sequences
 
+### Regex
+- [x] Regex literals: `/pattern/flags`
+- [x] Regex with flags: `/pattern/gi`
+
 ### Comprehensions
 - [x] Array: `[x*2 for x in arr when x > 5]`
 - [x] Object: `{k: v for k, v of obj}`
@@ -97,68 +103,23 @@ Objetivo do produto:
 - [x] `do` keyword (IIFE)
 - [x] `yield` keyword (parsed)
 - [x] `import`, `from ... import ...`, `import * as`
+- [x] `is` / `isnt` aliases
+- [x] `is not` combination
 
 ---
 
-## Plano para 100% CoffeeScript Compatibility
+## Features Restantes (2%)
 
-### Fase 7 - Operadores Condicionais (HIGH PRIORITY)
-
-- [ ] `||=` operator: `a ||= b` (a = a || b)
-- [ ] `&&=` operator: `a &&= b` (a = a && b)
-- [ ] `is` alias for `==`
-- [ ] `isnt` alias for `!=`
-
-### Fase 8 - Regex e Prototype (HIGH PRIORITY)
-
-- [ ] Regex literals: `/pattern/flags`
-- [ ] `::` prototype access: `Array::map`
-- [ ] Block regex with flags: `///pattern///gi`
-
-### Fase 9 - Switch Avancado (MEDIUM PRIORITY)
+### Edge Cases
 
 - [ ] Switch without value (case-like behavior)
-- [ ] Switch with `then` keyword
-
-### Fase 10 - Generators Funcionais (MEDIUM PRIORITY)
-
-- [ ] Generator functions: `yield` creates actual generator
 - [ ] `for...from` for ES6 iterables
-- [ ] `yield from` equivalent
-
-### Fase 11 - Edge Cases (LOW PRIORITY)
-
 - [ ] Splats in comprehensions
-- [ ] `unless` with `else` clause
 - [ ] Proper `undefined` vs `null` semantics
 - [ ] Multiple assignment: `a = b = c = 1`
-
-### Fase 12 - Inline Python (OPTIONAL)
-
-- [ ] ```python block syntax
-- [ ] Python expression embedding
-
----
-
-## Execucao Imediata
-
-### Sprint Atual - Operadores Condicionais
-
-1. [ ] Implementar `||=` no lexer
-2. [ ] Implementar `&&=` no lexer
-3. [ ] Implementar `is` keyword
-4. [ ] Implementar `isnt` keyword
-5. [ ] Atualizar parser
-6. [ ] Atualizar interpreter
-7. [ ] Adicionar testes
-8. [ ] Commit
-
-### Proximo Sprint - Regex e Prototype
-
-1. [ ] Implementar regex literals `/pattern/flags`
-2. [ ] Implementar `::` operator
-3. [ ] Adicionar testes
-4. [ ] Commit
+- [ ] Generator functions (yield creates actual generator)
+- [ ] Block regex with flags
+- [ ] Inline Python blocks
 
 ---
 
@@ -170,9 +131,9 @@ python -m coffeepy.tests
 
 ## Commits Recentes
 
-- `6bc7543` add 17 tests for new features
-- `3fda09b` add interpreter support for do, fat_arrow, yield, by step
-- `9f0e72f` add parser support for do, fat_arrow, yield, by step
-- `e1cf8d6` add AST nodes for DoExpr, YieldExpr, ChainedComparison
-- `e3a5d18` add lexer support for fat_arrow, do, by, yield
-- `c91c634` add tokens for do, by, yield, fat_arrow
+- `ef4ef46` add 17 tests for ||=, &&=, is/isnt, ::, regex
+- `df8efdd` add interpreter support for ||=, &&=, ::, is/isnt, regex
+- `660a3f3` add parser support for ||=, &&=, ::, is/isnt
+- `3af6203` add AST nodes for LogicalAssignStmt, ProtoAccessExpr
+- `2a5ccac` add lexer support for ||=, &&=, ::, is/is not, regex
+- `3fb60e4` add tokens for ||=, &&=, ::, is, isnt
