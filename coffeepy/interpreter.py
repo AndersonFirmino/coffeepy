@@ -16,9 +16,11 @@ from .ast_nodes import (
     BlockExpr,
     BreakStmt,
     Call,
+    ChainedComparison,
     ClassDecl,
     ComprehensionExpr,
     ContinueStmt,
+    DoExpr,
     ExistentialAssignStmt,
     ExistentialExpr,
     ExprStmt,
@@ -56,6 +58,7 @@ from .ast_nodes import (
     Unary,
     UpdateStmt,
     WhileStmt,
+    YieldExpr,
 )
 from .environment import Environment
 from .errors import CoffeeRuntimeError
@@ -193,7 +196,7 @@ class BoundMethod:
 
 
 class CoffeeFunction:
-    def __init__(self, params: list[str], body, closure: Environment, interpreter: "Interpreter", splat_param: bool = False, defaults: dict = None, this_params: tuple = ()):
+    def __init__(self, params: list[str], body, closure: Environment, interpreter: "Interpreter", splat_param: bool = False, defaults: dict = None, this_params: tuple = (), bound: bool = False):
         self.params = params
         self.body = body
         self.closure = closure
@@ -201,9 +204,19 @@ class CoffeeFunction:
         self.splat_param = splat_param
         self.defaults = defaults if defaults else {}
         self.this_params = this_params
+        self.bound = bound
+        self.bound_this = None
+        if bound:
+            try:
+                self.bound_this = closure.get("this")
+            except CoffeeRuntimeError:
+                pass
 
     def __call__(self, *args, **kwargs):
         call_env = Environment(parent=self.closure)
+
+        if self.bound and self.bound_this is not None:
+            call_env.define("this", self.bound_this)
 
         if self.splat_param and self.params:
             splat_index = len(self.params) - 1
@@ -235,7 +248,6 @@ class CoffeeFunction:
         for name, value in kwargs.items():
             call_env.define(name, value)
 
-        # Handle @param shorthand - auto-assign this.param = param
         if self.this_params:
             try:
                 this_value = call_env.get("this")
@@ -244,7 +256,7 @@ class CoffeeFunction:
                     if isinstance(this_value, CoffeeInstance):
                         this_value.set(param_name, param_value)
             except CoffeeRuntimeError:
-                pass  # 'this' not defined, skip @param handling
+                pass
 
         previous = self.interpreter.environment
         self.interpreter.environment = call_env
@@ -397,7 +409,8 @@ class Interpreter:
                         method_expr.params, method_expr.body, self.environment, self,
                         method_expr.splat_param,
                         dict(method_expr.defaults) if method_expr.defaults else {},
-                        method_expr.this_params
+                        method_expr.this_params,
+                        method_expr.bound
                     )
                 else:
                     methods[method_name] = self._evaluate(method_expr)
@@ -454,6 +467,11 @@ class Interpreter:
     def _execute_from_import(self, statement: FromImportStmt) -> None:
         module_obj = importlib.import_module(statement.module)
         for imported in statement.names:
+            if imported.name == "*":
+                alias = imported.alias if imported.alias is not None else statement.module.split(".")[-1]
+                self.environment.define(alias, module_obj)
+                continue
+
             if not hasattr(module_obj, imported.name):
                 raise CoffeeRuntimeError(
                     f"Module '{statement.module}' has no attribute '{imported.name}'."
@@ -530,10 +548,13 @@ class Interpreter:
         if isinstance(target, ObjectDestructuring):
             if not isinstance(value, dict):
                 raise CoffeeRuntimeError("Cannot object-destructure non-object value.")
-            for key, alias in target.properties:
-                if key not in value:
+            for key, alias, default in target.properties:
+                if key in value:
+                    prop_value = value[key]
+                elif default is not None:
+                    prop_value = self._evaluate(default)
+                else:
                     raise CoffeeRuntimeError(f"Property '{key}' not found in object.")
-                prop_value = value[key]
                 if alias is not None:
                     self._assign_target(alias, prop_value)
                 else:
@@ -643,7 +664,7 @@ class Interpreter:
             return self._evaluate(expression.else_branch)
 
         if isinstance(expression, FunctionLiteral):
-            return CoffeeFunction(expression.params, expression.body, self.environment, self, expression.splat_param, dict(expression.defaults) if expression.defaults else {}, expression.this_params)
+            return CoffeeFunction(expression.params, expression.body, self.environment, self, expression.splat_param, dict(expression.defaults) if expression.defaults else {}, expression.this_params, expression.bound)
 
         if isinstance(expression, ArrayLiteral):
             return [self._evaluate(item) for item in expression.items]
@@ -657,14 +678,31 @@ class Interpreter:
         if isinstance(expression, RangeLiteral):
             start = self._evaluate(expression.start)
             end = self._evaluate(expression.end)
+            step = self._evaluate(expression.step) if expression.step else None
+            
             if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
                 raise CoffeeRuntimeError("Range bounds must be numbers.")
+            
             start_int = int(start)
             end_int = int(end)
-            if expression.exclusive:
-                return list(range(start_int, end_int))
+            
+            if step is not None:
+                step_int = int(step)
+            elif start_int > end_int:
+                step_int = -1
             else:
-                return list(range(start_int, end_int + 1))
+                step_int = 1
+            
+            if expression.exclusive:
+                if step_int > 0:
+                    return list(range(start_int, end_int, step_int))
+                else:
+                    return list(range(start_int, end_int - 1, step_int))
+            else:
+                if step_int > 0:
+                    return list(range(start_int, end_int + 1, step_int))
+                else:
+                    return list(range(start_int, end_int - 1, step_int))
 
         if isinstance(expression, GetAttr):
             target = self._evaluate(expression.target)
@@ -836,6 +874,31 @@ class Interpreter:
 
         if isinstance(expression, SpreadExpr):
             return self._evaluate(expression.value)
+
+        if isinstance(expression, DoExpr):
+            func = self._evaluate(expression.body)
+            if not callable(func):
+                raise CoffeeRuntimeError("'do' requires a callable expression.")
+            return func()
+
+        if isinstance(expression, YieldExpr):
+            raise CoffeeRuntimeError("'yield' used outside generator function.")
+
+        if isinstance(expression, ChainedComparison):
+            for i in range(len(expression.operators)):
+                left = self._evaluate(expression.operands[i])
+                right = self._evaluate(expression.operands[i + 1])
+                op = expression.operators[i]
+                
+                if op == LT and not (left < right):
+                    return False
+                if op == LTE and not (left <= right):
+                    return False
+                if op == GT and not (left > right):
+                    return False
+                if op == GTE and not (left >= right):
+                    return False
+            return True
 
         raise CoffeeRuntimeError("Unsupported expression.")
 
