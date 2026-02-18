@@ -947,6 +947,130 @@ arr[3..]
 """
         self.assertEqual(self.run_code(source), [4, 5])
 
+    def test_do_iife(self):
+        source = """result = do -> 1 + 2
+result
+"""
+        self.assertEqual(self.run_code(source), 3)
+
+    def test_do_iife_with_args(self):
+        source = """result = do (x = 5) -> x * 2
+result
+"""
+        self.assertEqual(self.run_code(source), 10)
+
+    def test_do_iife_multiline(self):
+        source = """result = do ->
+  x = 10
+  y = 20
+  x + y
+result
+"""
+        self.assertEqual(self.run_code(source), 30)
+
+    def test_fat_arrow_basic(self):
+        source = """class Counter
+  constructor: ->
+    this.count = 0
+  increment: =>
+    this.count += 1
+  get: -> this.count
+
+c = new Counter()
+c.increment()
+c.increment()
+c.get()
+"""
+        self.assertEqual(self.run_code(source), 2)
+
+    def test_fat_arrow_preserves_this(self):
+        source = """class Button
+  constructor: (@label) ->
+    this.onClick = =>
+      this.label
+  click: -> this.onClick()
+
+btn = new Button("Submit")
+btn.click()
+"""
+        self.assertEqual(self.run_code(source), "Submit")
+
+    def test_range_by_step(self):
+        source = "1..10 by 2"
+        self.assertEqual(self.run_code(source), [1, 3, 5, 7, 9])
+
+    def test_range_by_step_exclusive(self):
+        source = "1...10 by 3"
+        self.assertEqual(self.run_code(source), [1, 4, 7])
+
+    def test_range_by_step_negative(self):
+        source = "10..1 by -2"
+        self.assertEqual(self.run_code(source), [10, 8, 6, 4, 2])
+
+    def test_range_by_step_with_variables(self):
+        source = """start = 0
+end = 10
+step = 5
+start..end by step
+"""
+        self.assertEqual(self.run_code(source), [0, 5, 10])
+
+    def test_object_destructuring_with_default(self):
+        source = """obj = {a: 1}
+{a, b = 10} = obj
+[a, b]
+"""
+        self.assertEqual(self.run_code(source), [1, 10])
+
+    def test_object_destructuring_with_default_override(self):
+        source = """obj = {a: 1, b: 2}
+{a, b = 10} = obj
+[a, b]
+"""
+        self.assertEqual(self.run_code(source), [1, 2])
+
+    def test_object_destructuring_alias_with_default(self):
+        source = """obj = {x: 100}
+{x: y, z = 999} = obj
+[y, z]
+"""
+        self.assertEqual(self.run_code(source), [100, 999])
+
+    def test_chained_comparison_true(self):
+        source = """x = 5
+1 < x < 10
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_chained_comparison_false(self):
+        source = """x = 15
+1 < x < 10
+"""
+        self.assertFalse(self.run_code(source))
+
+    def test_chained_comparison_multiple(self):
+        source = """a = 1
+b = 2
+c = 3
+a < b < c
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_chained_comparison_with_equality(self):
+        source = """x = 5
+y = 5
+z = 5
+x <= y <= z
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_import_star_as_alias(self):
+        source = """from os import * as myos
+myos.name
+"""
+        import os
+        self.assertEqual(self.run_code(source), os.name)
+
 
 if __name__ == "__main__":
     unittest.main()
