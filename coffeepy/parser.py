@@ -614,7 +614,9 @@ class Parser:
 
     def _switch_expression(self) -> Expression:
         if self._match(SWITCH):
-            value = self._expression()
+            value: Expression | None = None
+            if not self._check(NEWLINE, INDENT):
+                value = self._expression()
             cases: list[tuple[list[Expression], Expression]] = []
             default: Expression | None = None
 
