@@ -1,4 +1,4 @@
-# CoffeePy - Plano de Reconstrucao (Zero)
+# CoffeePy - Full CoffeeScript Compatibility
 
 Objetivo do produto:
 
@@ -10,10 +10,9 @@ Objetivo do produto:
 
 ## Status geral
 
-- Progresso atual: **98%** (full CoffeeScript compatibility)
-- Restante: **2%** (edge cases e features avancadas)
-- Testes: **171 testes passando**
-- Referencia oficial restaurada localmente em `references/coffeescript/` para guiar sintaxe e suites.
+- Progresso atual: **99%** (full CoffeeScript compatibility)
+- Restante: **1%** (edge cases avancados)
+- Testes: **174 testes passando**
 
 ## Regras do projeto (travadas)
 
@@ -22,20 +21,11 @@ Objetivo do produto:
 - Compatibilidade com JS/Node nao e objetivo.
 - Cada feature nova deve vir com testes.
 
-## Definition of Done
-
-- [x] Parser de sintaxe CoffeeScript completo para casos reais.
-- [x] Runtime Python consistente para fluxos principais da linguagem.
-- [x] Sistema de import Python funcional no codigo `.coffee`.
-- [x] Interop estavel com objetos/funcoes/classes Python.
-- [ ] Blocos inline de Python especificados e implementados.
-- [x] Suite de testes Python-first robusta.
-- [ ] Documentacao de linguagem e limites publicada.
-
-## Features Implementadas (98%)
+## Features Implementadas (99%)
 
 ### Core Language
 - [x] Variables, assignments, scoping
+- [x] Multiple assignment: `a = b = c = 1`
 - [x] Arithmetic operators: `+`, `-`, `*`, `/`, `%`, `**`
 - [x] Comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`, `is`, `isnt`
 - [x] Logical: `and`, `or`, `not`
@@ -108,17 +98,12 @@ Objetivo do produto:
 
 ---
 
-## Features Restantes (2%)
-
-### Edge Cases
+## Features Restantes (1%)
 
 - [ ] Switch without value (case-like behavior)
 - [ ] `for...from` for ES6 iterables
 - [ ] Splats in comprehensions
-- [ ] Proper `undefined` vs `null` semantics
-- [ ] Multiple assignment: `a = b = c = 1`
 - [ ] Generator functions (yield creates actual generator)
-- [ ] Block regex with flags
 - [ ] Inline Python blocks
 
 ---
@@ -131,9 +116,9 @@ python -m coffeepy.tests
 
 ## Commits Recentes
 
+- `03fdeab` add 3 tests for chained assignment
+- `71668e9` add interpreter support for chained assignments
+- `1820763` add parser support for chained assignments
+- `b4392b2` add MultiAssignStmt AST node
+- `9bfc22a` update task list: 98% complete
 - `ef4ef46` add 17 tests for ||=, &&=, is/isnt, ::, regex
-- `df8efdd` add interpreter support for ||=, &&=, ::, is/isnt, regex
-- `660a3f3` add parser support for ||=, &&=, ::, is/isnt
-- `3af6203` add AST nodes for LogicalAssignStmt, ProtoAccessExpr
-- `2a5ccac` add lexer support for ||=, &&=, ::, is/is not, regex
-- `3fb60e4` add tokens for ||=, &&=, ::, is, isnt
