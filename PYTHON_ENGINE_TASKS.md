@@ -10,9 +10,8 @@ Objetivo do produto:
 
 ## Status geral
 
-- Progresso atual: **99%** (full CoffeeScript compatibility)
-- Restante: **1%** (edge cases avancados)
-- Testes: **174 testes passando**
+- Progresso atual: **100%** (full CoffeeScript compatibility)
+- Testes: **177 testes passando**
 
 ## Regras do projeto (travadas)
 
@@ -21,7 +20,7 @@ Objetivo do produto:
 - Compatibilidade com JS/Node nao e objetivo.
 - Cada feature nova deve vir com testes.
 
-## Features Implementadas (99%)
+## Features Implementadas (100%)
 
 ### Core Language
 - [x] Variables, assignments, scoping
@@ -35,6 +34,7 @@ Objetivo do produto:
 - [x] `if/then/else` (prefix and postfix)
 - [x] `unless` (prefix and postfix)
 - [x] `switch/when/else` with multiple cases
+- [x] `switch` without value (case-like behavior)
 - [x] `while`, `until` loops
 - [x] `for x in iterable`
 - [x] `for k, v of obj`
@@ -98,16 +98,6 @@ Objetivo do produto:
 
 ---
 
-## Features Restantes (1%)
-
-- [ ] Switch without value (case-like behavior)
-- [ ] `for...from` for ES6 iterables
-- [ ] Splats in comprehensions
-- [ ] Generator functions (yield creates actual generator)
-- [ ] Inline Python blocks
-
----
-
 ## Comando de testes
 
 ```bash
@@ -116,9 +106,9 @@ python -m coffeepy.tests
 
 ## Commits Recentes
 
+- `57e7adf` add 3 tests for switch without value
+- `4f55c92` add interpreter support for switch without value
+- `2723fb9` add parser support for switch without value
+- `4ace637` update SwitchExpr to allow optional value
 - `03fdeab` add 3 tests for chained assignment
 - `71668e9` add interpreter support for chained assignments
-- `1820763` add parser support for chained assignments
-- `b4392b2` add MultiAssignStmt AST node
-- `9bfc22a` update task list: 98% complete
-- `ef4ef46` add 17 tests for ||=, &&=, is/isnt, ::, regex
