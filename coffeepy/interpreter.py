@@ -38,6 +38,7 @@ from .ast_nodes import (
     InterpolatedString,
     Literal,
     LogicalAssignStmt,
+    MultiAssignStmt,
     NewExpr,
     ObjectComprehensionExpr,
     ObjectDestructuring,
@@ -321,6 +322,12 @@ class Interpreter:
         if isinstance(statement, AssignStmt):
             value = self._evaluate(statement.value)
             self._assign_target(statement.target, value)
+            return value
+
+        if isinstance(statement, MultiAssignStmt):
+            value = self._evaluate(statement.value)
+            for target in statement.targets:
+                self._assign_target(target, value)
             return value
 
         if isinstance(statement, AugAssignStmt):
