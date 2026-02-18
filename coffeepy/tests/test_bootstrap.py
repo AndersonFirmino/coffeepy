@@ -1071,6 +1071,132 @@ myos.name
         import os
         self.assertEqual(self.run_code(source), os.name)
 
+    def test_or_or_assignment(self):
+        source = """a = false
+a ||= true
+a
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_or_or_assignment_no_override(self):
+        source = """a = "existing"
+a ||= "default"
+a
+"""
+        self.assertEqual(self.run_code(source), "existing")
+
+    def test_and_and_assignment(self):
+        source = """a = "value"
+a &&= a + "-suffix"
+a
+"""
+        self.assertEqual(self.run_code(source), "value-suffix")
+
+    def test_and_and_assignment_falsy(self):
+        source = """a = false
+a &&= "should not assign"
+a
+"""
+        self.assertFalse(self.run_code(source))
+
+    def test_is_operator(self):
+        source = """a = 5
+b = 5
+a is b
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_is_operator_false(self):
+        source = """a = 5
+b = 10
+a is b
+"""
+        self.assertFalse(self.run_code(source))
+
+    def test_isnt_operator(self):
+        source = """a = 5
+b = 10
+a isnt b
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_isnt_operator_false(self):
+        source = """a = 5
+b = 5
+a isnt b
+"""
+        self.assertFalse(self.run_code(source))
+
+    def test_is_with_strings(self):
+        source = '''a = "hello"
+b = "hello"
+a is b
+'''
+        self.assertTrue(self.run_code(source))
+
+    def test_regex_literal_basic(self):
+        source = """pattern = /hello/
+pattern
+"""
+        import re
+        result = self.run_code(source)
+        self.assertIsInstance(result, type(re.compile("hello")))
+
+    def test_regex_literal_with_flags(self):
+        source = """pattern = /hello/i
+pattern
+"""
+        import re
+        result = self.run_code(source)
+        self.assertIsInstance(result, type(re.compile("hello")))
+        self.assertTrue(result.flags & re.IGNORECASE == re.IGNORECASE)
+
+    def test_regex_test_method(self):
+        source = """pattern = /hello/
+match = pattern.search("say hello world")
+match isnt null
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_proto_access_class(self):
+        source = """class Animal
+  speak: -> "sound"
+
+Animal::speak
+"""
+        result = self.run_code(source)
+        self.assertTrue(callable(result))
+
+    def test_is_not_combination(self):
+        source = """a = 5
+b = 10
+a is not b
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_is_not_with_same_values(self):
+        source = """a = 5
+b = 5
+a is not b
+"""
+        self.assertFalse(self.run_code(source))
+
+    def test_and_and_chaining(self):
+        source = """a = true
+b = true
+c = true
+a and b and c
+"""
+        self.assertTrue(self.run_code(source))
+
+    def test_or_or_chaining(self):
+        source = """a = false
+b = true
+c = false
+a or b or c
+"""
+        self.assertTrue(self.run_code(source))
+
 
 if __name__ == "__main__":
     unittest.main()
