@@ -34,12 +34,14 @@ from .ast_nodes import (
     IndexExpr,
     InterpolatedString,
     Literal,
+    LogicalAssignStmt,
     NewExpr,
     ObjectComprehensionExpr,
     ObjectDestructuring,
     ObjectLiteral,
     OfExpr,
     Program,
+    ProtoAccessExpr,
     RangeLiteral,
     ReturnStmt,
     SafeAccessExpr,
@@ -61,6 +63,8 @@ from .ast_nodes import (
 from .errors import CoffeeParseError
 from .tokens import (
     AND,
+    ANDAND,
+    ANDAND_EQ,
     ARROW,
     AS,
     AT,
@@ -93,6 +97,8 @@ from .tokens import (
     IMPORT,
     IN,
     INDENT,
+    IS,
+    ISNT,
     LBRACE,
     LBRACKET,
     LPAREN,
@@ -109,11 +115,14 @@ from .tokens import (
     NUMBER,
     OF,
     OR,
+    OROR,
+    OROR_EQ,
     OUTDENT,
     PERCENT,
     PLUS,
     PLUSPLUS,
     PLUS_EQ,
+    PROTO,
     QUESTION,
     QUESTIONDOT,
     QUESTIONEQ,
@@ -237,6 +246,14 @@ class Parser:
             operator = self._previous().kind
             value = self._expression()
             return AugAssignStmt(target, operator, value)
+
+        if self._match(OROR_EQ):
+            value = self._expression()
+            return LogicalAssignStmt(target, OROR, value)
+
+        if self._match(ANDAND_EQ):
+            value = self._expression()
+            return LogicalAssignStmt(target, ANDAND, value)
 
         if self._match(PLUSPLUS, MINUSMINUS):
             operator = self._previous().kind
@@ -694,8 +711,15 @@ class Parser:
 
     def _equality(self) -> Expression:
         expr = self._comparison()
-        while self._match(EQEQ, NEQ):
+        while self._match(EQEQ, NEQ, IS, ISNT):
             operator = self._previous().kind
+            if operator == IS:
+                if self._match(NOT):
+                    operator = NEQ
+                else:
+                    operator = EQEQ
+            elif operator == ISNT:
+                operator = NEQ
             right = self._comparison()
             expr = Binary(expr, operator, right)
         return expr
@@ -785,6 +809,11 @@ class Parser:
             if self._match(DOT):
                 name = self._consume(IDENT, "Expected property name after '.'.").lexeme
                 expr = GetAttr(expr, name)
+                continue
+
+            if self._match(PROTO):
+                name = self._consume(IDENT, "Expected property name after '::'.").lexeme
+                expr = ProtoAccessExpr(expr, name)
                 continue
 
             if self._match(QUESTIONDOT):
@@ -917,6 +946,10 @@ class Parser:
         if self._match(AT):
             prop_name = self._consume(IDENT, "Expected property name after '@'.").lexeme
             return GetAttr(ThisExpr(), prop_name)
+
+        if self._match(PROTO):
+            name = self._consume(IDENT, "Expected property name after '::'.").lexeme
+            return ProtoAccessExpr(None, name)
 
         if self._match(NUMBER):
             return Literal(self._previous().literal)
