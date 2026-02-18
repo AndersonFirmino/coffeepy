@@ -9,9 +9,11 @@ from .ast_nodes import (
     BlockExpr,
     BreakStmt,
     Call,
+    ChainedComparison,
     ClassDecl,
     ComprehensionExpr,
     ContinueStmt,
+    DoExpr,
     ExistentialAssignStmt,
     ExistentialExpr,
     ExprStmt,
@@ -21,8 +23,10 @@ from .ast_nodes import (
     FromImportStmt,
     FunctionLiteral,
     GetAttr,
+    GetterDecl,
     Identifier,
     IfExpr,
+    ImportAllStmt,
     ImportItem,
     ImportName,
     ImportStmt,
@@ -39,6 +43,7 @@ from .ast_nodes import (
     RangeLiteral,
     ReturnStmt,
     SafeAccessExpr,
+    SetterDecl,
     SliceExpr,
     SplatExpr,
     SpreadExpr,
@@ -51,6 +56,7 @@ from .ast_nodes import (
     Unary,
     UpdateStmt,
     WhileStmt,
+    YieldExpr,
 )
 from .errors import CoffeeParseError
 from .tokens import (
@@ -59,11 +65,13 @@ from .tokens import (
     AS,
     AT,
     BREAK,
+    BY,
     CATCH,
     CLASS,
     COLON,
     COMMA,
     CONTINUE,
+    DO,
     DOT,
     DOTDOT,
     DOTDOTDOT,
@@ -72,10 +80,12 @@ from .tokens import (
     EQ,
     EQEQ,
     EXTENDS,
+    FAT_ARROW,
     FALSE,
     FINALLY,
     FOR,
     FROM,
+    GET,
     GT,
     GTE,
     IDENT,
@@ -112,6 +122,7 @@ from .tokens import (
     RETURN,
     RPAREN,
     SEMICOLON,
+    SET,
     SLASH,
     STAR,
     STARSTAR,
@@ -129,6 +140,7 @@ from .tokens import (
     UNLESS,
     WHEN,
     WHILE,
+    YIELD,
 )
 
 
@@ -168,6 +180,11 @@ class Parser:
         if self._match(THROW):
             value = self._expression()
             return ThrowStmt(value)
+
+        if self._match(YIELD):
+            if self._check(NEWLINE, SEMICOLON, OUTDENT, EOF):
+                return ExprStmt(YieldExpr(None))
+            return ExprStmt(YieldExpr(self._expression()))
 
         if self._match(TRY):
             return self._try_statement()
@@ -396,22 +413,22 @@ class Parser:
         return None, False
 
     def _try_parse_object_destructuring_target(self) -> ObjectDestructuring | None:
-        properties: list[tuple[str, Expression | None]] = []
+        properties: list[tuple[str, Expression | None, Expression | None]] = []
 
         if not self._check(RBRACE):
             result = self._try_parse_object_destructuring_property()
             if result is None:
                 return None
-            key, alias = result
-            properties.append((key, alias))
+            key, alias, default = result
+            properties.append((key, alias, default))
             while self._match(COMMA):
                 if self._check(RBRACE):
                     break
                 result = self._try_parse_object_destructuring_property()
                 if result is None:
                     return None
-                key, alias = result
-                properties.append((key, alias))
+                key, alias, default = result
+                properties.append((key, alias, default))
 
         if not self._match(RBRACE):
             return None
@@ -441,16 +458,22 @@ class Parser:
 
         return None
 
-    def _try_parse_object_destructuring_property(self) -> tuple[str, Expression | None] | None:
+    def _try_parse_object_destructuring_property(self) -> tuple[str, Expression | None, Expression | None] | None:
         if not self._match(IDENT):
             return None
         key = self._previous().lexeme
         alias: Expression | None = None
+        default: Expression | None = None
+        
         if self._match(COLON):
             if not self._match(IDENT):
                 return None
             alias = Identifier(self._previous().lexeme)
-        return key, alias
+        
+        if self._match(EQ):
+            default = self._logical_or()
+        
+        return key, alias, default
 
     def _for_in_statement(self) -> Statement:
         first_var = self._consume(IDENT, "Expected loop variable after 'for'.").lexeme
@@ -527,6 +550,12 @@ class Parser:
     def _from_import_statement(self) -> FromImportStmt:
         module = self._module_path()
         self._consume(IMPORT, "Expected 'import' in from-import statement.")
+
+        if self._match(STAR):
+            alias: str | None = None
+            if self._match(AS):
+                alias = self._consume(IDENT, "Expected identifier after 'as'.").lexeme
+            return FromImportStmt(module, [ImportName("*", alias)])
 
         names = [self._import_name()]
         while self._match(COMMA):
@@ -672,11 +701,20 @@ class Parser:
         return expr
 
     def _comparison(self) -> Expression:
-        expr = self._range()
+        operands = [self._range()]
+        operators = []
+        
         while self._match(LT, LTE, GT, GTE):
             operator = self._previous().kind
-            right = self._range()
-            expr = Binary(expr, operator, right)
+            operators.append(operator)
+            operands.append(self._range())
+        
+        if len(operators) == 0:
+            expr = operands[0]
+        elif len(operators) == 1:
+            expr = Binary(operands[0], operators[0], operands[1])
+        else:
+            expr = ChainedComparison(operands, operators)
         
         if self._match(IN):
             right = self._range()
@@ -692,7 +730,10 @@ class Parser:
         expr = self._additive()
         if self._match(DOTDOT):
             end = self._additive()
-            return RangeLiteral(expr, end, exclusive=False)
+            step = None
+            if self._match(BY):
+                step = self._additive()
+            return RangeLiteral(expr, end, exclusive=False, step=step)
         if self._check(DOTDOTDOT):
             next_is_end = (self._check_next(RPAREN) or self._check_next(COMMA) or 
                           self._check_next(NEWLINE) or self._check_next(OUTDENT) or 
@@ -700,7 +741,10 @@ class Parser:
             if not next_is_end:
                 self._advance()
                 end = self._additive()
-                return RangeLiteral(expr, end, exclusive=True)
+                step = None
+                if self._match(BY):
+                    step = self._additive()
+                return RangeLiteral(expr, end, exclusive=True, step=step)
         return expr
 
     def _additive(self) -> Expression:
@@ -846,11 +890,29 @@ class Parser:
             name = self._advance().lexeme
             self._consume(ARROW, "Expected '->' in function literal.")
             body = self._parse_function_body()
-            return FunctionLiteral([name], body)
+            return FunctionLiteral([name], body, bound=False)
+
+        if self._check(IDENT) and self._check_next(FAT_ARROW):
+            name = self._advance().lexeme
+            self._consume(FAT_ARROW, "Expected '=>' in fat arrow function.")
+            body = self._parse_function_body()
+            return FunctionLiteral([name], body, bound=True)
 
         if self._match(ARROW):
             body = self._parse_function_body()
-            return FunctionLiteral([], body)
+            return FunctionLiteral([], body, bound=False)
+
+        if self._match(FAT_ARROW):
+            body = self._parse_function_body()
+            return FunctionLiteral([], body, bound=True)
+
+        if self._match(DO):
+            return DoExpr(self._expression())
+
+        if self._match(YIELD):
+            if self._check(NEWLINE, SEMICOLON, OUTDENT, EOF, RPAREN, RBRACKET, RBRACE, COMMA):
+                return YieldExpr(None)
+            return YieldExpr(self._expression())
 
         if self._match(AT):
             prop_name = self._consume(IDENT, "Expected property name after '@'.").lexeme
