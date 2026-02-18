@@ -1,5 +1,3 @@
-# ☕ CoffeePy
-
 <div align="center">
 
 <img src="coffepy_logo.png" alt="CoffeePy Logo" width="400"/>
