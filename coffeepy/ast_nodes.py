@@ -305,7 +305,7 @@ class ThrowStmt(Statement):
 
 @dataclass(frozen=True)
 class SwitchExpr(Expression):
-    value: Expression
+    value: Expression | None
     cases: list[tuple[list[Expression], Expression]]
     default: Expression | None
 
