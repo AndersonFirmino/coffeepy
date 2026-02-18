@@ -125,6 +125,19 @@ class SetterDecl(Statement):
 
 
 @dataclass(frozen=True)
+class LogicalAssignStmt(Statement):
+    target: Expression
+    operator: str
+    value: Expression
+
+
+@dataclass(frozen=True)
+class ProtoAccessExpr(Expression):
+    target: Expression | None
+    name: str
+
+
+@dataclass(frozen=True)
 class AugAssignStmt(Statement):
     target: Expression
     operator: str
