@@ -823,18 +823,30 @@ class Interpreter:
             return klass(*args, **kwargs)
 
         if isinstance(expression, SwitchExpr):
-            switch_value = self._evaluate(expression.value)
+            if expression.value is not None:
+                switch_value = self._evaluate(expression.value)
 
-            for conditions, body in expression.cases:
-                for condition in conditions:
-                    cond_value = self._evaluate(condition)
-                    if switch_value == cond_value:
-                        return self._evaluate(body)
+                for conditions, body in expression.cases:
+                    for condition in conditions:
+                        cond_value = self._evaluate(condition)
+                        if switch_value == cond_value:
+                            return self._evaluate(body)
 
-            if expression.default:
-                return self._evaluate(expression.default)
+                if expression.default:
+                    return self._evaluate(expression.default)
 
-            return None
+                return None
+            else:
+                for conditions, body in expression.cases:
+                    for condition in conditions:
+                        cond_value = self._evaluate(condition)
+                        if cond_value:
+                            return self._evaluate(body)
+
+                if expression.default:
+                    return self._evaluate(expression.default)
+
+                return None
 
         if isinstance(expression, ExistentialExpr):
             left = self._evaluate(expression.left)
