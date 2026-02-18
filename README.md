@@ -1,84 +1,234 @@
 # CoffeePy
 
-Reinicio oficial do projeto.
+**CoffeeScript that runs on Python.**
 
-Este repositorio foi resetado para comecar do zero com um objetivo unico:
+Write CoffeeScript syntax, execute with Python runtime, use the entire Python ecosystem.
 
-- Escrever codigo em sintaxe CoffeeScript (`.coffee`)
-- Executar em runtime Python nativo
-- Usar ecossistema Python (stdlib + libs externas)
-- Sem transpilar para JavaScript
-- Sem dependencia de Node para executar programas
+- No JavaScript transpilation
+- No Node.js dependency
+- Full Python interop
 
-## Estado atual
-
-Projeto em fase **bootstrap**.
-
-- Arquitetura anterior foi descartada
-- Replanejamento feito para Python-first
-- Base de codigo reiniciada
-- Referencia oficial de sintaxe/tests restaurada em `references/coffeescript/` (uso de referencia, nao de runtime)
-- Primeira execucao funcional bootstrap implementada (lexer/parser/interpreter/CLI iniciais)
-
-## Proximo passo
-
-Consulte `PYTHON_ENGINE_TASKS.md` para o plano oficial de reconstrucao.
-
-## Bootstrap atual (ja funcional)
-
-- `import` e `from ... import ...` basicos
-- atribuicoes em identificador, atributo e indice (`x = ...`, `obj.a = ...`, `arr[0] = ...`)
-- atribuicoes compostas e update (`+=`, `-=`, `++`, `--`)
-- aritmetica basica (`+`, `-`, `*`, `/`, `%`, `**`)
-- comparacoes (`<`, `<=`, `>`, `>=`, `==`, `!=`) e logica (`and`, `or`, `not`)
-- acesso por atributo (`obj.prop`)
-- acesso por indice (`arr[0]`) e literais `[]`/`{}`
-- chamadas explicitas (`fn(...)`) e implicitas simples (`fn x`)
-- kwargs em chamada explicita (`fn(a=1, b=2)`)
-- condicionais em expressao (`if ... then ... else ...`, postfix `if/unless`)
-- loops basicos (`while` e `until`) com bloco por indentacao e forma `then`
-- funcoes literais (`x -> expr`, `(x, y) -> expr`, `-> expr`)
-- `return` em corpo de funcao
-- blocos multiline por indentacao para `if` e corpo de funcao
-
-Exemplo rapido:
-
-```coffee
-from math import sqrt
-x = sqrt 81
-print x
-```
-
-Exemplo multiline:
-
-```coffee
-double_then_add = (x, y) ->
-  z = x * 2
-  z + y
-
-if true
-  print double_then_add 5, 3
-else
-  print 0
-```
-
-Rodar:
+## Installation
 
 ```bash
-python -m coffeepy --eval "from math import sqrt; print sqrt 81"
-python -m coffeepy caminho/do/arquivo.coffee
+pip install coffeepy
 ```
 
-Testes:
+Or clone and install:
+
+```bash
+git clone https://github.com/your-repo/coffe-py.git
+cd coffe-py
+pip install -e .
+```
+
+## Quick Start
+
+```bash
+# Run a file
+python -m coffeepy script.coffee
+
+# Interactive REPL
+python -m coffeepy -i
+
+# Evaluate expression
+python -m coffeepy --eval "print 'Hello, World!'"
+```
+
+## Examples
+
+### Python Imports
+
+```coffee
+from os import getcwd
+from datetime import datetime
+import json
+
+print getcwd()
+print datetime.now()
+```
+
+### Functions
+
+```coffee
+# Basic function
+add = (a, b) -> a + b
+
+# Default parameters
+greet = (name = "World") -> "Hello, #{name}!"
+
+# Rest parameters
+sum = (numbers...) ->
+  total = 0
+  for n in numbers
+    total += n
+  total
+
+# Fat arrow (auto-bind this)
+class Counter
+  constructor: ->
+    this.count = 0
+  increment: => this.count += 1
+```
+
+### Classes
+
+```coffee
+class Animal
+  constructor: (@name) ->
+  speak: -> "#{@name} makes a sound"
+
+class Dog extends Animal
+  constructor: (@name, @breed) ->
+    super @name
+  speak: -> "#{@name} the #{@breed} barks!"
+
+dog = new Dog "Rex", "German Shepherd"
+dog.speak()
+```
+
+### Destructuring
+
+```coffee
+# Array
+[first, second, rest...] = [1, 2, 3, 4, 5]
+
+# Object
+{name, age} = {name: "John", age: 30}
+
+# With defaults
+{x, y = 10} = {x: 5}
+```
+
+### Comprehensions
+
+```coffee
+# Array comprehension
+doubled = [x * 2 for x in [1, 2, 3, 4, 5]]
+evens = [x for x in [1..10] when x % 2 == 0]
+
+# Object comprehension
+squares = {x: x * x for x in [1, 2, 3, 4, 5]}
+```
+
+### Control Flow
+
+```coffee
+# If/unless
+result = if x > 0 then "positive" else "negative"
+do_something() unless skip
+
+# Switch
+switch day
+  when "Mon", "Tue", "Wed", "Thu", "Fri" then "weekday"
+  when "Sat", "Sun" then "weekend"
+  else "unknown"
+
+# Switch without value (case-like)
+switch
+  when x < 0 then "negative"
+  when x == 0 then "zero"
+  else "positive"
+```
+
+### Operators
+
+```coffee
+# Existential
+name = user?.name ? "Anonymous"
+value ?= "default"
+
+# Logical assignment
+a ||= b  # a = a || b
+a &&= b  # a = a && b
+
+# Comparison aliases
+x is y   # x == y
+x isnt y # x != y
+
+# Chained comparisons
+1 < x < 10
+
+# Ranges
+[1..5]      # [1, 2, 3, 4, 5]
+[1...5]     # [1, 2, 3, 4]
+[1..10 by 2] # [1, 3, 5, 7, 9]
+```
+
+### Strings
+
+```coffee
+# Interpolation
+greeting = "Hello, #{name}!"
+
+# Block strings
+text = """
+  This is a
+  multi-line
+  string
+"""
+
+# Regex
+pattern = /hello/i
+result = pattern.search("Hello World")
+```
+
+### Try/Catch
+
+```coffee
+try
+  risky_operation()
+catch error
+  print "Error: #{error}"
+finally
+  cleanup()
+```
+
+## REPL Commands
+
+```
+.exit   - Exit the REPL
+.help   - Show help
+.clear  - Clear the screen
+```
+
+## Features
+
+| Category | Features |
+|----------|----------|
+| **Core** | Variables, scoping, arithmetic, comparison, logical operators |
+| **Functions** | Literals, default params, rest params, fat arrow `=>`, closures |
+| **Classes** | `class`, `extends`, `super`, `new`, `::` prototype access |
+| **Control** | `if/unless`, `switch/when`, `while/until`, `for in/of` |
+| **Data** | Arrays, objects, destructuring, splats, comprehensions |
+| **Operators** | `?`, `?.`, `?=`, `||=`, `&&=`, `is`, `isnt`, ranges, slices |
+| **Strings** | Interpolation, block strings, regex literals |
+| **Python** | `import`, `from ... import`, `import * as`, full interop |
+
+## Running Tests
 
 ```bash
 python -m coffeepy.tests
 ```
 
-Status atual da suite bootstrap: 50 testes passando.
+## Language Contract
 
-## Referencia de linguagem
+CoffeePy uses Python semantics:
 
-- O codigo oficial do CoffeeScript fica em `references/coffeescript/` para consulta de sintaxe, parser e testes.
-- Essa pasta e usada como **fonte de referencia tecnica**, nao como dependencia de execucao do CoffeePy.
-- Contrato atual da linguagem (Python-first) em `docs/COFFEEPY_LANGUAGE_CONTRACT_V0.md`.
+- `null` and `undefined` → Python `None`
+- `true/false/yes/no/on/off` → Python `True/False`
+- Arrays → Python `list`
+- Objects → Python `dict`
+- `and/or/not` → Python `and/or/not`
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions welcome! Please read the language contract before submitting PRs.
+
+---
+
+**CoffeePy v1.0.0** - Full CoffeeScript compatibility on Python runtime.
