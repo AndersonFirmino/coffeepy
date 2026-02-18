@@ -10,12 +10,10 @@ Objetivo do produto:
 
 ## Status geral
 
-- Progresso atual: **100%** (practical scripting with Python interop)
-- Progresso para CoffeeScript completo: **90%**
-- Restante: **0%** (practical) / **10%** (full CoffeeScript - edge cases only)
+- Progresso atual: **95%** (full CoffeeScript compatibility)
+- Restante: **5%** (edge cases e features avancadas)
+- Testes: **154 testes passando**
 - Referencia oficial restaurada localmente em `references/coffeescript/` para guiar sintaxe e suites.
-
-> Motivo: reset completo do projeto para alinhar com o objetivo correto.
 
 ## Regras do projeto (travadas)
 
@@ -26,151 +24,155 @@ Objetivo do produto:
 
 ## Definition of Done
 
-- [ ] Parser de sintaxe CoffeeScript completo para casos reais.
-- [ ] Runtime Python consistente para fluxos principais da linguagem.
-- [ ] Sistema de import Python funcional no codigo `.coffee`.
-- [ ] Interop estavel com objetos/funcoes/classes Python.
+- [x] Parser de sintaxe CoffeeScript completo para casos reais.
+- [x] Runtime Python consistente para fluxos principais da linguagem.
+- [x] Sistema de import Python funcional no codigo `.coffee`.
+- [x] Interop estavel com objetos/funcoes/classes Python.
 - [ ] Blocos inline de Python especificados e implementados.
-- [ ] Suite de testes Python-first robusta.
+- [x] Suite de testes Python-first robusta.
 - [ ] Documentacao de linguagem e limites publicada.
 
-## Fases de execucao
+## Features Implementadas (95%)
 
-### Fase 0 - Bootstrap (agora)
+### Core Language
+- [x] Variables, assignments, scoping
+- [x] Arithmetic operators: `+`, `-`, `*`, `/`, `%`, `**`
+- [x] Comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`
+- [x] Logical: `and`, `or`, `not`
+- [x] Chained comparisons: `1 < x < 10`
 
-- [x] Reset de repositorio e planejamento do zero.
-- [x] README raiz alinhado ao novo objetivo.
-- [x] Estrutura minima de pacote/CLI para novo ciclo.
-- [x] Base de testes minima para validar bootstrap.
+### Control Flow
+- [x] `if/then/else` (prefix and postfix)
+- [x] `unless` (prefix and postfix)
+- [x] `switch/when/else` with multiple cases
+- [x] `while`, `until` loops
+- [x] `for x in iterable`
+- [x] `for k, v of obj`
+- [x] `break`, `continue`, `return`
+- [x] `try/catch/finally`, `throw`
 
-### Fase 1 - Contrato da linguagem
+### Functions
+- [x] Function literals: `x ->`, `(x, y) ->`, `->`
+- [x] Default parameters: `(x = 10) ->`
+- [x] Rest/splat params: `(args...) ->`
+- [x] `@param` shorthand: `(@name) ->`
+- [x] Fat arrow `=>` (auto-bind `this`)
+- [x] Closures
 
-- [~] Especificar mapeamento: sintaxe CoffeeScript -> semantica Python.
-- [~] Definir comportamento oficial de tipos centrais (`null`, bools, strings, numeros).
-- [~] Definir regras de erro (lexer, parser, runtime, excecoes Python).
-- [x] Definir sintaxe oficial para imports Python em `.coffee`.
+### Data Structures
+- [x] Arrays `[]`, Objects `{}`
+- [x] Array destructuring: `[a, b] = arr`
+- [x] Object destructuring: `{x, y} = obj`
+- [x] Splat destructuring: `[a, rest...] = arr`
+- [x] Destructuring with defaults: `{x, y = 10} = obj`
+- [x] Nested destructuring
 
-### Fase 2 - Frontend (lexer/parser/AST)
+### Classes
+- [x] `class`, `extends`, `super`, `new`
+- [x] Constructor, methods
+- [x] `this` and `@` syntax
+- [x] Inheritance
 
-- [x] Implementar lexer base do novo ciclo.
-- [x] Implementar parser base do novo ciclo.
-- [x] Implementar AST minima para execucao.
-- [~] Cobrir estrutura de bloco, funcoes, atribuicoes, chamadas e controle de fluxo.
+### Operators
+- [x] Existential: `a ? b`, `obj?.prop`, `a ?= b`
+- [x] Membership: `x in arr`, `k of obj`
+- [x] Ranges: `1..5` (inclusive), `1...5` (exclusive)
+- [x] Range with step: `1..10 by 2`
+- [x] Descending ranges: `10..1`
+- [x] Slices: `arr[1..3]`, `arr[..2]`, `arr[3..]`
 
-### Fase 3 - Runtime Python
+### Strings
+- [x] Interpolation: `"Hello #{name}"`
+- [x] Block strings: `"""multi line"""`
+- [x] Heregex: `/// regex ///`
+- [x] Escape sequences
 
-- [x] Ambiente de execucao (escopos e simbolos).
-- [~] Avaliacao de expressoes e statements principais.
-- [~] Funcoes, classes e metodos com semantica Python-first.
-- [~] Excecoes e propagacao de erros.
+### Comprehensions
+- [x] Array: `[x*2 for x in arr when x > 5]`
+- [x] Object: `{k: v for k, v of obj}`
 
-### Fase 4 - Interop Python
+### Other
+- [x] Spread in calls: `f(arr...)`
+- [x] REPL: `.exit`, `.help`, `.clear`
+- [x] `do` keyword (IIFE)
+- [x] `yield` keyword (parsed)
+- [x] `import`, `from ... import ...`, `import * as`
 
-- [~] `import` e `from ... import ...`.
-- [~] Chamada de funcoes Python com args e kwargs.
-- [~] Acesso/atribuicao de atributos em objetos Python.
-- [~] Conversao de dados entre estruturas Coffee e Python.
+---
 
-### Fase 5 - Inline Python
+## Plano para 100% CoffeeScript Compatibility
 
-- [ ] Definir sintaxe de bloco inline Python.
-- [ ] Implementar execucao com isolamento/escopo definidos.
-- [ ] Testes de seguranca e previsibilidade.
+### Fase 7 - Operadores Condicionais (HIGH PRIORITY)
 
-### Fase 6 - Testes e DX
+- [ ] `||=` operator: `a ||= b` (a = a || b)
+- [ ] `&&=` operator: `a &&= b` (a = a && b)
+- [ ] `is` alias for `==`
+- [ ] `isnt` alias for `!=`
 
-- [~] Testes unitarios por camada (lexer, parser, runtime).
-- [ ] Testes de integracao com pacotes Python reais.
-- [ ] CLI com execucao de arquivo e REPL.
-- [ ] Guia de uso e troubleshooting.
+### Fase 8 - Regex e Prototype (HIGH PRIORITY)
 
-## Proximo sprint (curto prazo)
+- [ ] Regex literals: `/pattern/flags`
+- [ ] `::` prototype access: `Array::map`
+- [ ] Block regex with flags: `///pattern///gi`
 
-1. ~~Expandir loops com `break`/`continue` e formas adicionais de condicao.~~ **DONE**
-2. ~~Adicionar loops `for x in iterable`~~ **DONE**
-3. ~~Implementar `for k, v of obj` para iteracao sobre objetos/dicts~~ **DONE**
-4. ~~Implementar ranges `[1..5]` e `[1...5]` (inclusivo e exclusivo)~~ **DONE**
-5. ~~Implementar destructuring basico: `[a, b] = arr`, `{x, y} = obj`~~ **DONE**
-6. ~~Adicionar classes: `class`, `extends`, `super`, `@`~~ **DONE**
-7. ~~Implementar try/catch/finally para tratamento de excecoes~~ **DONE**
-8. ~~Implementar switch/when/else para condicionais multiplas~~ **DONE**
-9. ~~Implementar operadores existenciais: `?.`, `?`, `?=`~~ **DONE**
-10. ~~Implementar splats/rest: `(args...) ->` para parametros rest~~ **DONE**
-11. ~~Implementar spread em chamadas: `f xs...`~~ **DONE**
-12. ~~Implementar interpolacao de strings: `"Hello #{name}"`~~ **DONE**
-13. ~~Implementar operadores `in`/`of`: `x in arr`, `k of obj`~~ **DONE**
-14. ~~Implementar comprehensions: `[x*2 for x in arr]`~~ **DONE**
-15. ~~Implementar parametros default: `(x = 10) ->`~~ **DONE**
-16. ~~Implementar block strings: `"""multi line"""`~~ **DONE**
-17. ~~Implementar heregex: `/// regex ///`~~ **DONE**
-18. ~~Implementar slice syntax: `arr[1..3]`, `arr[..2]`, `arr[3..]`~~ **DONE**
-19. ~~Adicionar REPL interativo~~ **DONE**
-20. ~~Implementar object comprehensions: `{k: v for k, v in obj}`~~ **DONE**
-21. ~~Implementar splat em arrays: `[a, rest...] = arr`~~ **DONE**
-22. ~~Implementar @param shorthand: `(@name) ->` auto-atribui `this.name = name`~~ **DONE**
+### Fase 9 - Switch Avancado (MEDIUM PRIORITY)
 
-**STATUS: 100% COMPLETO PARA SCRIPTING PRATICO!**
+- [ ] Switch without value (case-like behavior)
+- [ ] Switch with `then` keyword
 
-## Entregas bootstrap (inicio efetivo)
+### Fase 10 - Generators Funcionais (MEDIUM PRIORITY)
 
-- `coffeepy/lexer.py`: lexer minimo com numeros, strings, comentarios, operadores basicos, keywords e escapes.
-- `coffeepy/parser.py`: parser minimo com `import`, `from ... import ...`, atribuicao, chamadas explicitas/implicitas, acesso por ponto e aritmetica.
-- `coffeepy/interpreter.py`: execucao Python-first inicial com importlib, escopo simples, chamadas de funcoes Python e `print` builtin.
-- `coffeepy/__main__.py`: CLI funcional para `--eval` e execucao de arquivo `.coffee`.
-- `coffeepy/tests/test_bootstrap.py`: suite inicial cobrindo imports, chamadas, atribuicoes, comentarios e saida `print`.
-- `docs/COFFEEPY_LANGUAGE_CONTRACT_V0.md`: contrato inicial Python-first da linguagem.
+- [ ] Generator functions: `yield` creates actual generator
+- [ ] `for...from` for ES6 iterables
+- [ ] `yield from` equivalent
 
-## Entregas da iteracao atual
+### Fase 11 - Edge Cases (LOW PRIORITY)
 
-- Suporte inicial a condicionais de expressao (`if ... then ... else ...` e postfix `if/unless`).
-- Suporte inicial a comparacoes e logica (`==`, `!=`, `<`, `<=`, `>`, `>=`, `and`, `or`, `not`).
-- Suporte inicial a funcoes literais Coffee (`x -> expr`, `(x, y) -> expr`, `-> expr`) com fechamento de escopo.
-- Runtime com short-circuit logico Python-first e comparacoes alinhadas ao modelo Python.
-- Suite bootstrap ampliada para cobrir os novos blocos.
-- Blocos por indentacao ativados no lexer/parser (`INDENT`/`OUTDENT`) para `if` e funcoes multiline.
-- Estruturas de dados basicas adicionadas: `[]`, `{}` e indexacao (`x[i]`).
-- Chamada Python com kwargs em call explicita (`fn(a=1, b=2)`).
-- Suporte inicial a atribuicao em atributo/index (`obj.x = ...`, `arr[0] = ...`).
-- Suporte inicial a `return` em funcoes com erro explicito em uso top-level.
-- Cobertura negativa adicionada (indentacao inconsistente, kwargs invalidos, target invalido de atribuicao).
-- Suporte inicial a atribuicao composta e update (`+=`, `-=`, `++`, `--`) em identificador/atributo/indice.
-- Suporte inicial a loops `while`/`until` com blocos por indentacao e forma inline com `then`.
-- Suporte a `break` e `continue` em loops (`while`, `until`, `for`).
-- Suporte a loops `for x in iterable` com blocos por indentacao.
-- Erros explicitos para `break`/`continue` fora de loops.
-- Suporte a loops `for k of obj` (apenas chaves) e `for k, v of obj` (chave-valor).
-- Suporte a ranges `1..5` (inclusivo: [1,2,3,4,5]) e `1...5` (exclusivo: [1,2,3,4]).
-- Ranges funcionam em expressoes e como iteraveis em for-loops.
-- Destructuring de arrays `[a, b] = arr` com elementos em falta definidos como `None`.
-- Destructuring de objetos `{x, y} = obj` e `{x: alias} = obj`.
-- Destructuring aninhado suportado `[[a, b], c] = [[1, 2], 3]`.
-- Classes com `class Name`, `extends Parent`, metodos e `constructor`.
-- Instanciacao com `new ClassName(args)`.
-- Acesso a `this` e `this.prop` (atributos de instancia).
-- Atribuicao em `this.prop = value` funciona em metodos.
-- Heranca com `extends` e metodos herdados.
-- Tratamento de excecoes com `try/catch/finally` e `throw`.
-- `switch x when ... then ... else ...` para condicionais multiplas.
-- Multiplos casos em `when a, b, c`.
-- Operador existencial `a ? b` (retorna a se nao for null, senao b).
-- Acesso seguro `obj?.prop` (retorna null se obj for null).
-- Atribuicao existencial `a ?= b` (atribui b apenas se a for null/undefined).
-- Splat/rest em parametros `(args...) ->` captura argumentos restantes como array.
-- Spread em chamadas `f(arr...)` expande array como argumentos.
-- Interpolacao de strings `"Hello #{name}"` com expressoes.
-- Operador `in` para verificacao de pertinencia (`x in arr`).
-- Operador `of` para verificacao de chave (`k of obj`).
-- Comprehensions `[x*2 for x in arr]` e com filtro `when`.
-- Parametros default `(x = 10) ->` para funcoes.
-- Block strings `"""multi line"""` com dedentacao automatica.
-- Heregex `/// regex ///` com comentarios e whitespace ignorado.
-- Slice syntax `arr[1..3]`, `arr[..2]`, `arr[3..]` para fatiar arrays/strings.
-- REPL interativo com comandos `.exit`, `.help`, `.clear`.
-- **NOVO**: Object comprehensions `{k: v for k, v of obj}` e com filtro `when`.
-- **NOVO**: Splat em array destructuring `[a, b, rest...] = arr` captura elementos restantes.
-- **NOVO**: `@param` shorthand em construtores: `constructor: (@name) ->` auto-atribui `this.name = name`.
-- Cobertura de testes ampliada para lexer/parser e runtime (137 testes verdes).
+- [ ] Splats in comprehensions
+- [ ] `unless` with `else` clause
+- [ ] Proper `undefined` vs `null` semantics
+- [ ] Multiple assignment: `a = b = c = 1`
 
-Comando atual de testes:
+### Fase 12 - Inline Python (OPTIONAL)
 
-- `python -m coffeepy.tests` (126 testes verdes)
+- [ ] ```python block syntax
+- [ ] Python expression embedding
+
+---
+
+## Execucao Imediata
+
+### Sprint Atual - Operadores Condicionais
+
+1. [ ] Implementar `||=` no lexer
+2. [ ] Implementar `&&=` no lexer
+3. [ ] Implementar `is` keyword
+4. [ ] Implementar `isnt` keyword
+5. [ ] Atualizar parser
+6. [ ] Atualizar interpreter
+7. [ ] Adicionar testes
+8. [ ] Commit
+
+### Proximo Sprint - Regex e Prototype
+
+1. [ ] Implementar regex literals `/pattern/flags`
+2. [ ] Implementar `::` operator
+3. [ ] Adicionar testes
+4. [ ] Commit
+
+---
+
+## Comando de testes
+
+```bash
+python -m coffeepy.tests
+```
+
+## Commits Recentes
+
+- `6bc7543` add 17 tests for new features
+- `3fda09b` add interpreter support for do, fat_arrow, yield, by step
+- `9f0e72f` add parser support for do, fat_arrow, yield, by step
+- `e1cf8d6` add AST nodes for DoExpr, YieldExpr, ChainedComparison
+- `e3a5d18` add lexer support for fat_arrow, do, by, yield
+- `c91c634` add tokens for do, by, yield, fat_arrow
