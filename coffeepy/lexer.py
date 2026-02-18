@@ -60,6 +60,7 @@ from .tokens import (
     OROR_EQ,
     OUTDENT,
     PERCENT,
+    PERCENT_EQ,
     PLUS,
     PLUSPLUS,
     PLUS_EQ,
@@ -74,8 +75,10 @@ from .tokens import (
     SEMICOLON,
     SET,
     SLASH,
+    SLASH_EQ,
     STAR,
     STARSTAR,
+    STAR_EQ,
     STRING,
     SUPER,
     SWITCH,
@@ -344,11 +347,16 @@ class Lexer:
         if ch == "*":
             if self._match("*"):
                 self._add_token(STARSTAR)
+            elif self._match("="):
+                self._add_token(STAR_EQ)
             else:
                 self._add_token(STAR)
             return
         if ch == "%":
-            self._add_token(PERCENT)
+            if self._match("="):
+                self._add_token(PERCENT_EQ)
+            else:
+                self._add_token(PERCENT)
             return
 
         if ch in {'"', "'"}:
@@ -360,7 +368,9 @@ class Lexer:
                 self._advance()
                 self._advance()
                 self._heregex()
-            elif self._peek() not in (" ", "\t", "\n", "\0") and self._peek() != "/":
+            elif self._match("="):
+                self._add_token(SLASH_EQ)
+            elif self._peek() not in (" ", "\t", "\n", "\0", "/", "=") and self._peek() != "":
                 self._regex()
             else:
                 self._add_token(SLASH)

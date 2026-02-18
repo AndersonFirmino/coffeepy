@@ -120,6 +120,7 @@ from .tokens import (
     OROR_EQ,
     OUTDENT,
     PERCENT,
+    PERCENT_EQ,
     PLUS,
     PLUSPLUS,
     PLUS_EQ,
@@ -134,8 +135,10 @@ from .tokens import (
     SEMICOLON,
     SET,
     SLASH,
+    SLASH_EQ,
     STAR,
     STARSTAR,
+    STAR_EQ,
     STRING,
     SUPER,
     SWITCH,
@@ -256,7 +259,7 @@ class Parser:
             value = self._expression()
             return ExistentialAssignStmt(target, value)
 
-        if self._match(PLUS_EQ, MINUS_EQ):
+        if self._match(PLUS_EQ, MINUS_EQ, STAR_EQ, SLASH_EQ, PERCENT_EQ):
             operator = self._previous().kind
             value = self._expression()
             return AugAssignStmt(target, operator, value)

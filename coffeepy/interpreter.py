@@ -83,12 +83,15 @@ from .tokens import (
     OR,
     OROR,
     PERCENT,
+    PERCENT_EQ,
     PLUS,
     PLUSPLUS,
     PLUS_EQ,
     SLASH,
+    SLASH_EQ,
     STAR,
     STARSTAR,
+    STAR_EQ,
 )
 
 
@@ -638,6 +641,12 @@ class Interpreter:
                 return left + right
             if operator_name == MINUS_EQ:
                 return left - right
+            if operator_name == STAR_EQ:
+                return left * right
+            if operator_name == SLASH_EQ:
+                return left / right
+            if operator_name == PERCENT_EQ:
+                return left % right
         except Exception as exc:
             raise CoffeeRuntimeError(f"Augmented assignment failed: {exc}") from exc
 
