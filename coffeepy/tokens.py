@@ -84,6 +84,13 @@ FINALLY = "FINALLY"
 THROW = "THROW"
 SWITCH = "SWITCH"
 WHEN = "WHEN"
+DO = "DO"
+BY = "BY"
+YIELD = "YIELD"
+FAT_ARROW = "FAT_ARROW"
+GET = "GET"
+SET = "SET"
+STAR = "STAR"
 
 
 @dataclass(frozen=True)
