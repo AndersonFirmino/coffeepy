@@ -1216,6 +1216,31 @@ a + b + c + d
 """
         self.assertEqual(self.run_code(source), 4)
 
+    def test_switch_without_value(self):
+        source = """x = 5
+switch
+  when x < 0 then \"negative\"
+  when x == 0 then \"zero\"
+  when x > 0 then \"positive\"
+"""
+        self.assertEqual(self.run_code(source), "positive")
+
+    def test_switch_without_value_first_match(self):
+        source = """switch
+  when true then \"first\"
+  when true then \"second\"
+"""
+        self.assertEqual(self.run_code(source), "first")
+
+    def test_switch_without_value_with_default(self):
+        source = """x = 100
+switch
+  when x < 10 then \"small\"
+  when x < 50 then \"medium\"
+  else \"large\"
+"""
+        self.assertEqual(self.run_code(source), "large")
+
 
 if __name__ == "__main__":
     unittest.main()
