@@ -4,6 +4,23 @@
 
 ## High Priority (When Bored)
 
+### Safe Access (`?.`) Full Support
+- [ ] `?.` should return `null` when property doesn't exist (not throw error)
+
+```coffee
+# Current behavior (BUG):
+user = {age: 30}
+user?.name          # → ERROR: Attribute 'name' not found.
+
+# Expected behavior:
+user = {age: 30}
+user?.name          # → null (safe, like JS/CoffeeScript)
+
+# Already works:
+user = null
+user?.name          # → null ✅
+```
+
 ### Better Error Messages
 - [ ] Runtime errors should show line number and column
 - [ ] Stack traces for nested function calls
