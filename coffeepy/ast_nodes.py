@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class SourceLocation:
+    line: int
+    column: int
+    
+    def __str__(self) -> str:
+        return f"line {self.line}, column {self.column}"
 
 
 class Statement:
@@ -181,6 +190,7 @@ class Literal(Expression):
 @dataclass(frozen=True)
 class Identifier(Expression):
     name: str
+    location: SourceLocation | None = None
 
 
 @dataclass(frozen=True)
@@ -194,6 +204,7 @@ class Binary(Expression):
     left: Expression
     operator: str
     right: Expression
+    location: SourceLocation | None = None
 
 
 @dataclass(frozen=True)
@@ -207,6 +218,7 @@ class IfExpr(Expression):
 class GetAttr(Expression):
     target: Expression
     name: str
+    location: SourceLocation | None = None
 
 
 @dataclass(frozen=True)
@@ -215,6 +227,7 @@ class Call(Expression):
     args: list[Expression]
     kwargs: list[tuple[str, Expression]]
     implicit: bool = False
+    location: SourceLocation | None = None
 
 
 @dataclass(frozen=True)

@@ -115,6 +115,31 @@ class _ThrowSignal(Exception):
         self.value = value
 
 
+class _YieldSignal(Exception):
+    def __init__(self, value):
+        super().__init__("yield")
+        self.value = value
+
+
+def contains_yield(node) -> bool:
+    if node is None:
+        return False
+    if isinstance(node, YieldExpr):
+        return True
+    for attr_name in dir(node):
+        if attr_name.startswith('_'):
+            continue
+        attr = getattr(node, attr_name)
+        if isinstance(attr, (Expression, Statement)):
+            if contains_yield(attr):
+                return True
+        elif isinstance(attr, (list, tuple)):
+            for item in attr:
+                if isinstance(item, (Expression, Statement)) and contains_yield(item):
+                    return True
+    return False
+
+
 class CoffeeClass:
     def __init__(self, name: str, parent, methods: dict, interpreter: "Interpreter"):
         self.name = name
@@ -281,16 +306,165 @@ class CoffeeFunction:
         return f"<CoffeeFunction ({params})>"
 
 
+class CoffeeGenerator:
+    def __init__(self, gen_func: "CoffeeGeneratorFunction", args: tuple, kwargs: dict):
+        self.gen_func = gen_func
+        self.args = args
+        self.kwargs = kwargs
+        self._generator = None
+        self._started = False
+        self._closed = False
+        self._send_value = None
+        self._throw_value = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.send(None)
+
+    def send(self, value):
+        if self._closed:
+            raise StopIteration
+        self._send_value = value
+        if not self._started:
+            self._started = True
+            self._generator = self._run_generator()
+        try:
+            return next(self._generator)
+        except StopIteration:
+            self._closed = True
+            raise
+
+    def throw(self, exc_type=None, exc_val=None, exc_tb=None):
+        if self._closed:
+            raise StopIteration
+        if exc_type is None:
+            exc_type = GeneratorExit
+        if isinstance(exc_type, type):
+            self._throw_value = exc_type(exc_val) if exc_val else exc_type()
+        else:
+            self._throw_value = exc_type
+        try:
+            return next(self._generator)
+        except StopIteration:
+            self._closed = True
+            raise
+
+    def close(self):
+        if self._closed:
+            return
+        self._closed = True
+        if self._generator is not None:
+            try:
+                self._generator.throw(GeneratorExit)
+            except (GeneratorExit, StopIteration):
+                pass
+
+    def _run_generator(self):
+        call_env = Environment(parent=self.gen_func.closure)
+
+        if self.gen_func.bound and self.gen_func.bound_this is not None:
+            call_env.define("this", self.gen_func.bound_this)
+
+        if self.gen_func.splat_param and self.gen_func.params:
+            splat_index = len(self.gen_func.params) - 1
+            for index, name in enumerate(self.gen_func.params[:-1]):
+                if index < len(self.args):
+                    value = self.args[index]
+                elif name in self.kwargs:
+                    value = self.kwargs.pop(name)
+                elif name in self.gen_func.defaults:
+                    value = self.gen_func.interpreter._evaluate(self.gen_func.defaults[name])
+                else:
+                    value = None
+                call_env.define(name, value)
+            splat_name = self.gen_func.params[-1]
+            rest_args = list(self.args[splat_index:]) if len(self.args) > splat_index else []
+            call_env.define(splat_name, rest_args)
+        else:
+            for index, name in enumerate(self.gen_func.params):
+                if index < len(self.args):
+                    value = self.args[index]
+                elif name in self.kwargs:
+                    value = self.kwargs.pop(name)
+                elif name in self.gen_func.defaults:
+                    value = self.gen_func.interpreter._evaluate(self.gen_func.defaults[name])
+                else:
+                    value = None
+                call_env.define(name, value)
+
+        for name, value in self.kwargs.items():
+            call_env.define(name, value)
+
+        if self.gen_func.this_params:
+            try:
+                this_value = call_env.get("this")
+                for param_name in self.gen_func.this_params:
+                    param_value = call_env.get(param_name)
+                    if isinstance(this_value, CoffeeInstance):
+                        this_value.set(param_name, param_value)
+            except CoffeeRuntimeError:
+                pass
+
+        previous = self.gen_func.interpreter.environment
+        self.gen_func.interpreter.environment = call_env
+        self.gen_func.interpreter._current_generator = self
+
+        try:
+            for yielded_value in self.gen_func.interpreter._evaluate_as_generator(self.gen_func.body):
+                yield yielded_value
+        finally:
+            self.gen_func.interpreter.environment = previous
+            self.gen_func.interpreter._current_generator = None
+
+    def __repr__(self) -> str:
+        params = ", ".join(self.gen_func.params)
+        return f"<CoffeeGenerator ({params})>"
+
+
+class CoffeeGeneratorFunction:
+    def __init__(self, params: list[str], body, closure: Environment, interpreter: "Interpreter", splat_param: bool = False, defaults: dict = None, this_params: tuple = (), bound: bool = False):
+        self.params = params
+        self.body = body
+        self.closure = closure
+        self.interpreter = interpreter
+        self.splat_param = splat_param
+        self.defaults = defaults if defaults else {}
+        self.this_params = this_params
+        self.bound = bound
+        self.bound_this = None
+        if bound:
+            try:
+                self.bound_this = closure.get("this")
+            except CoffeeRuntimeError:
+                pass
+
+    def __call__(self, *args, **kwargs):
+        return CoffeeGenerator(self, args, kwargs)
+
+    def __repr__(self) -> str:
+        params = ", ".join(self.params)
+        return f"<CoffeeGeneratorFunction ({params})>"
+
+
 class Interpreter:
-    def __init__(self, stdout=None):
+    def __init__(self, stdout=None, source: str | None = None):
         self.stdout = stdout if stdout is not None else sys.stdout
+        self.source = source
+        self._current_generator = None
         self.environment = Environment()
         self._install_builtins()
 
     def interpret(self, source: str):
+        self.source = source
         tokens = Lexer(source).tokenize()
         program = Parser(tokens).parse()
         return self.execute_program(program)
+
+    def _error(self, message: str, node=None) -> CoffeeRuntimeError:
+        location = getattr(node, 'location', None) if node else None
+        return CoffeeRuntimeError(message, location, self.source)
 
     def execute_program(self, program: Program):
         result = None
@@ -298,11 +472,11 @@ class Interpreter:
             for statement in program.statements:
                 result = self._execute(statement)
         except _ReturnSignal as signal:
-            raise CoffeeRuntimeError("'return' used outside function.") from signal
+            raise self._error("'return' used outside function.") from signal
         except _BreakSignal:
-            raise CoffeeRuntimeError("'break' used outside loop.") from None
+            raise self._error("'break' used outside loop.") from None
         except _ContinueSignal:
-            raise CoffeeRuntimeError("'continue' used outside loop.") from None
+            raise self._error("'continue' used outside loop.") from None
         return result
 
     def _install_builtins(self) -> None:
@@ -599,7 +773,7 @@ class Interpreter:
 
         if isinstance(target, GetAttr):
             container = self._evaluate(target.target)
-            return self._get_attr_value(container, target.name)
+            return self._get_attr_value(container, target.name, target)
 
         if isinstance(target, IndexExpr):
             container = self._evaluate(target.target)
@@ -625,15 +799,14 @@ class Interpreter:
         except Exception as exc:
             raise CoffeeRuntimeError(f"Attribute assignment failed: {exc}") from exc
 
-    @staticmethod
-    def _get_attr_value(container, name: str):
+    def _get_attr_value(self, container, name: str, node=None):
         if isinstance(container, CoffeeInstance):
             return container.get(name)
         if isinstance(container, dict) and name in container:
             return container[name]
         if hasattr(container, name):
             return getattr(container, name)
-        raise CoffeeRuntimeError(f"Attribute '{name}' not found.")
+        raise self._error(f"Attribute '{name}' not found.", node)
 
     def _apply_augmented_operator(self, operator_name: str, left, right):
         try:
@@ -663,6 +836,197 @@ class Interpreter:
 
         raise CoffeeRuntimeError("Unsupported update operator.")
 
+    def _evaluate_as_generator(self, expression):
+        if isinstance(expression, Literal):
+            return
+
+        if isinstance(expression, BlockExpr):
+            for statement in expression.statements:
+                if isinstance(statement, ExprStmt):
+                    if contains_yield(statement.expression):
+                        for val in self._evaluate_as_generator(statement.expression):
+                            yield val
+                    else:
+                        self._execute(statement)
+                elif isinstance(statement, ForInStmt):
+                    for val in self._evaluate_as_generator(statement):
+                        if val is not None:
+                            yield val
+                elif isinstance(statement, ForOfStmt):
+                    for val in self._evaluate_as_generator(statement):
+                        if val is not None:
+                            yield val
+                elif isinstance(statement, WhileStmt):
+                    for val in self._evaluate_as_generator(statement):
+                        if val is not None:
+                            yield val
+                elif isinstance(statement, IfExpr):
+                    for val in self._evaluate_as_generator(statement):
+                        if val is not None:
+                            yield val
+                elif isinstance(statement, TryStmt):
+                    for val in self._evaluate_as_generator(statement):
+                        if val is not None:
+                            yield val
+                elif hasattr(statement, 'body') and contains_yield(statement.body):
+                    for val in self._evaluate_as_generator(statement.body):
+                        yield val
+                else:
+                    self._execute(statement)
+            return
+
+        if isinstance(expression, IfExpr):
+            condition = self._evaluate(expression.condition)
+            if condition:
+                if contains_yield(expression.then_branch):
+                    for val in self._evaluate_as_generator(expression.then_branch):
+                        yield val
+                else:
+                    self._evaluate(expression.then_branch)
+            else:
+                if contains_yield(expression.else_branch):
+                    for val in self._evaluate_as_generator(expression.else_branch):
+                        yield val
+                else:
+                    self._evaluate(expression.else_branch)
+            return
+
+        if isinstance(expression, ForInStmt):
+            iterable = self._evaluate(expression.iterable)
+            for item in iterable:
+                self.environment.define(expression.var_name, item)
+                if contains_yield(expression.body):
+                    for val in self._evaluate_as_generator(expression.body):
+                        yield val
+                else:
+                    try:
+                        self._evaluate(expression.body)
+                    except _ContinueSignal:
+                        continue
+                    except _BreakSignal:
+                        break
+            return
+
+        if isinstance(expression, ForOfStmt):
+            iterable = self._evaluate(expression.iterable)
+            if isinstance(iterable, dict):
+                items = list(iterable.items())
+            else:
+                items = iterable
+            for key, value in items:
+                self.environment.define(expression.key_var, key)
+                if expression.value_var:
+                    self.environment.define(expression.value_var, value)
+                if contains_yield(expression.body):
+                    for val in self._evaluate_as_generator(expression.body):
+                        yield val
+                else:
+                    try:
+                        self._evaluate(expression.body)
+                    except _ContinueSignal:
+                        continue
+                    except _BreakSignal:
+                        break
+            return
+
+        if isinstance(expression, WhileStmt):
+            while self._evaluate(expression.condition):
+                if contains_yield(expression.body):
+                    for val in self._evaluate_as_generator(expression.body):
+                        yield val
+                else:
+                    try:
+                        self._evaluate(expression.body)
+                    except _ContinueSignal:
+                        continue
+                    except _BreakSignal:
+                        break
+            return
+
+        if isinstance(expression, YieldExpr):
+            value = None
+            if expression.value is not None:
+                value = self._evaluate(expression.value)
+            yield value
+            return
+
+        if isinstance(expression, DoExpr):
+            func = self._evaluate(expression.body)
+            if not callable(func):
+                raise CoffeeRuntimeError("'do' requires a callable expression.")
+            result = func()
+            if hasattr(result, '__iter__') and not isinstance(result, (str, bytes, dict)):
+                for val in result:
+                    yield val
+            return
+
+        if isinstance(expression, SwitchExpr):
+            if expression.value is not None:
+                switch_value = self._evaluate(expression.value)
+                for conditions, body in expression.cases:
+                    for condition in conditions:
+                        cond_value = self._evaluate(condition)
+                        if switch_value == cond_value:
+                            if contains_yield(body):
+                                for val in self._evaluate_as_generator(body):
+                                    yield val
+                            return
+                if expression.default:
+                    if contains_yield(expression.default):
+                        for val in self._evaluate_as_generator(expression.default):
+                            yield val
+            else:
+                for conditions, body in expression.cases:
+                    for condition in conditions:
+                        cond_value = self._evaluate(condition)
+                        if cond_value:
+                            if contains_yield(body):
+                                for val in self._evaluate_as_generator(body):
+                                    yield val
+                            return
+                if expression.default:
+                    if contains_yield(expression.default):
+                        for val in self._evaluate_as_generator(expression.default):
+                            yield val
+            return
+
+        if isinstance(expression, TryStmt):
+            try:
+                if contains_yield(expression.try_block):
+                    for val in self._evaluate_as_generator(expression.try_block):
+                        yield val
+                else:
+                    self._evaluate(expression.try_block)
+            except _ThrowSignal as signal:
+                if expression.catch_block:
+                    if expression.catch_var:
+                        self.environment.define(expression.catch_var, signal.value)
+                    if contains_yield(expression.catch_block):
+                        for val in self._evaluate_as_generator(expression.catch_block):
+                            yield val
+                    else:
+                        self._evaluate(expression.catch_block)
+                else:
+                    raise
+            finally:
+                if expression.finally_block:
+                    self._evaluate(expression.finally_block)
+            return
+
+        if isinstance(expression, ComprehensionExpr):
+            iterable = self._evaluate(expression.iterable)
+            for item in iterable:
+                self.environment.define(expression.var_name, item)
+                if expression.filter_condition:
+                    if not self._evaluate(expression.filter_condition):
+                        continue
+                if contains_yield(expression.body):
+                    for val in self._evaluate_as_generator(expression.body):
+                        yield val
+            return
+
+        self._evaluate(expression)
+
     def _evaluate(self, expression):
         if isinstance(expression, Literal):
             value = expression.value
@@ -686,7 +1050,7 @@ class Interpreter:
             return block_result
 
         if isinstance(expression, Identifier):
-            return self._lookup_identifier(expression.name)
+            return self._lookup_identifier(expression)
 
         if isinstance(expression, Unary):
             right = self._evaluate(expression.right)
@@ -712,6 +1076,8 @@ class Interpreter:
             return self._evaluate(expression.else_branch)
 
         if isinstance(expression, FunctionLiteral):
+            if contains_yield(expression.body):
+                return CoffeeGeneratorFunction(expression.params, expression.body, self.environment, self, expression.splat_param, dict(expression.defaults) if expression.defaults else {}, expression.this_params, expression.bound)
             return CoffeeFunction(expression.params, expression.body, self.environment, self, expression.splat_param, dict(expression.defaults) if expression.defaults else {}, expression.this_params, expression.bound)
 
         if isinstance(expression, ArrayLiteral):
@@ -754,7 +1120,7 @@ class Interpreter:
 
         if isinstance(expression, GetAttr):
             target = self._evaluate(expression.target)
-            return self._get_attr_value(target, expression.name)
+            return self._get_attr_value(target, expression.name, expression)
 
         if isinstance(expression, IndexExpr):
             target = self._evaluate(expression.target)
@@ -867,11 +1233,14 @@ class Interpreter:
             target = self._evaluate(expression.target)
             if target is None:
                 return None
-            return self._get_attr_value(target, expression.name)
+            try:
+                return self._get_attr_value(target, expression.name, expression)
+            except CoffeeRuntimeError:
+                return None
 
         if isinstance(expression, ProtoAccessExpr):
             if expression.target is None:
-                raise CoffeeRuntimeError("Prototype access '::' requires a target (e.g., Array::map).")
+                raise self._error("Prototype access '::' requires a target (e.g., Array::map).", expression)
             target = self._evaluate(expression.target)
             if hasattr(target, '_find_method'):
                 method = target._find_method(expression.name)
@@ -880,8 +1249,8 @@ class Interpreter:
             if hasattr(target, 'methods') and expression.name in target.methods:
                 return target.methods[expression.name]
             if hasattr(target, '__class__'):
-                return self._get_attr_value(target.__class__, expression.name)
-            raise CoffeeRuntimeError(f"Cannot access prototype of non-class value.")
+                return self._get_attr_value(target.__class__, expression.name, expression)
+            raise self._error(f"Cannot access prototype of non-class value.", expression)
 
         if isinstance(expression, SplatExpr):
             return self._evaluate(expression.value)
@@ -956,7 +1325,12 @@ class Interpreter:
             return func()
 
         if isinstance(expression, YieldExpr):
-            raise CoffeeRuntimeError("'yield' used outside generator function.")
+            if self._current_generator is None:
+                raise CoffeeRuntimeError("'yield' used outside generator function.")
+            value = None
+            if expression.value is not None:
+                value = self._evaluate(expression.value)
+            raise _YieldSignal(value)
 
         if isinstance(expression, ChainedComparison):
             for i in range(len(expression.operators)):
@@ -976,7 +1350,8 @@ class Interpreter:
 
         raise CoffeeRuntimeError("Unsupported expression.")
 
-    def _lookup_identifier(self, name: str):
+    def _lookup_identifier(self, node: Identifier):
+        name = node.name
         try:
             return self.environment.get(name)
         except CoffeeRuntimeError:
@@ -988,7 +1363,7 @@ class Interpreter:
                 return value
             return value
 
-        raise CoffeeRuntimeError(f"Undefined identifier '{name}'.")
+        raise self._error(f"Undefined identifier '{name}'.", node)
 
     def _evaluate_binary(self, expression: Binary):
         if expression.operator == OR:

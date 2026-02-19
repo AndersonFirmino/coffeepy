@@ -48,6 +48,7 @@ from .ast_nodes import (
     SafeAccessExpr,
     SetterDecl,
     SliceExpr,
+    SourceLocation,
     SplatExpr,
     SpreadExpr,
     Statement,
@@ -161,6 +162,9 @@ class Parser:
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
         self.current = 0
+
+    def _loc_from_token(self, token: Token) -> SourceLocation:
+        return SourceLocation(token.line, token.column)
 
     def parse(self) -> Program:
         statements: list[Statement] = []
@@ -335,7 +339,8 @@ class Parser:
         if not self._match(IDENT):
             return None
 
-        target = Identifier(self._previous().lexeme)
+        token = self._previous()
+        target = Identifier(token.lexeme, self._loc_from_token(token))
 
         while True:
             if self._match(DOT):
@@ -439,7 +444,8 @@ class Parser:
             return None, False
 
         if self._match(IDENT):
-            ident = Identifier(self._previous().lexeme)
+            token = self._previous()
+            ident = Identifier(token.lexeme, self._loc_from_token(token))
             if self._match(DOTDOTDOT):
                 return ident, True
             return ident, False
@@ -488,7 +494,8 @@ class Parser:
             return None
 
         if self._match(IDENT):
-            return Identifier(self._previous().lexeme)
+            token = self._previous()
+            return Identifier(token.lexeme, self._loc_from_token(token))
 
         return None
 
@@ -502,7 +509,8 @@ class Parser:
         if self._match(COLON):
             if not self._match(IDENT):
                 return None
-            alias = Identifier(self._previous().lexeme)
+            token = self._previous()
+            alias = Identifier(token.lexeme, self._loc_from_token(token))
         
         if self._match(EQ):
             default = self._logical_or()
@@ -708,9 +716,10 @@ class Parser:
     def _logical_or(self) -> Expression:
         expr = self._existential()
         while self._match(OR):
-            operator = self._previous().kind
+            op_token = self._previous()
+            operator = op_token.kind
             right = self._existential()
-            expr = Binary(expr, operator, right)
+            expr = Binary(expr, operator, right, self._loc_from_token(op_token))
         return expr
 
     def _existential(self) -> Expression:
@@ -723,15 +732,17 @@ class Parser:
     def _logical_and(self) -> Expression:
         expr = self._equality()
         while self._match(AND):
-            operator = self._previous().kind
+            op_token = self._previous()
+            operator = op_token.kind
             right = self._equality()
-            expr = Binary(expr, operator, right)
+            expr = Binary(expr, operator, right, self._loc_from_token(op_token))
         return expr
 
     def _equality(self) -> Expression:
         expr = self._comparison()
         while self._match(EQEQ, NEQ, IS, ISNT):
-            operator = self._previous().kind
+            op_token = self._previous()
+            operator = op_token.kind
             if operator == IS:
                 if self._match(NOT):
                     operator = NEQ
@@ -740,7 +751,7 @@ class Parser:
             elif operator == ISNT:
                 operator = NEQ
             right = self._comparison()
-            expr = Binary(expr, operator, right)
+            expr = Binary(expr, operator, right, self._loc_from_token(op_token))
         return expr
 
     def _comparison(self) -> Expression:
@@ -793,25 +804,28 @@ class Parser:
     def _additive(self) -> Expression:
         expr = self._multiplicative()
         while self._match(PLUS, MINUS):
-            operator = self._previous().kind
+            op_token = self._previous()
+            operator = op_token.kind
             right = self._multiplicative()
-            expr = Binary(expr, operator, right)
+            expr = Binary(expr, operator, right, self._loc_from_token(op_token))
         return expr
 
     def _multiplicative(self) -> Expression:
         expr = self._power()
         while self._match(STAR, SLASH, PERCENT):
-            operator = self._previous().kind
+            op_token = self._previous()
+            operator = op_token.kind
             right = self._power()
-            expr = Binary(expr, operator, right)
+            expr = Binary(expr, operator, right, self._loc_from_token(op_token))
         return expr
 
     def _power(self) -> Expression:
         expr = self._unary()
         if self._match(STARSTAR):
-            operator = self._previous().kind
+            op_token = self._previous()
+            operator = op_token.kind
             right = self._power()
-            expr = Binary(expr, operator, right)
+            expr = Binary(expr, operator, right, self._loc_from_token(op_token))
         return expr
 
     def _unary(self) -> Expression:
@@ -826,8 +840,9 @@ class Parser:
 
         while True:
             if self._match(DOT):
+                dot_token = self._previous()
                 name = self._consume(IDENT, "Expected property name after '.'.").lexeme
-                expr = GetAttr(expr, name)
+                expr = GetAttr(expr, name, self._loc_from_token(dot_token))
                 continue
 
             if self._match(PROTO):
@@ -845,8 +860,9 @@ class Parser:
                 continue
 
             if self._match(LPAREN):
+                paren_token = self._previous()
                 args, kwargs = self._argument_list()
-                expr = Call(expr, args, kwargs, implicit=False)
+                expr = Call(expr, args, kwargs, implicit=False, location=self._loc_from_token(paren_token))
                 continue
 
             if self._can_parse_implicit_call(expr):
@@ -998,7 +1014,8 @@ class Parser:
             return NewExpr(class_expr, [], [])
 
         if self._match(IDENT):
-            return Identifier(self._previous().lexeme)
+            token = self._previous()
+            return Identifier(token.lexeme, self._loc_from_token(token))
 
         if self._match(LBRACKET):
             return self._array_literal()

@@ -2,56 +2,84 @@
 
 > **Status:** These are hobby improvements for the uncertain future. CoffeePy is currently a functional toy language.
 
-## High Priority (When Bored)
+## Completed Features ✅
 
-### Safe Access (`?.`) Full Support
-- [ ] `?.` should return `null` when property doesn't exist (not throw error)
+### Safe Access (`?.`) Full Support - DONE
+- [x] `?.` returns `null` when property doesn't exist (not throw error)
 
 ```coffee
-# Current behavior (BUG):
 user = {age: 30}
-user?.name          # → ERROR: Attribute 'name' not found.
-
-# Expected behavior:
-user = {age: 30}
-user?.name          # → null (safe, like JS/CoffeeScript)
-
-# Already works:
+user?.name          # → null ✅ (was ERROR before)
+user?.age           # → 30 ✅
 user = null
 user?.name          # → null ✅
 ```
 
-### Better Error Messages
-- [ ] Runtime errors should show line number and column
-- [ ] Stack traces for nested function calls
-- [ ] Better error context (show the offending line)
-- [ ] Suggested fixes for common mistakes
+### Better Error Messages - DONE
+- [x] Runtime errors show line number and column
+- [x] Error context (show the offending line)
 
 ```coffee
-# Current:
-Undefined identifier 'undefined_var'.
+x = undefined_var
 
-# Desired:
+# Output:
 Undefined identifier 'undefined_var'.
-  at line 7, column 5
-    undefined_var
-    ^^^^^^^^^^^^^
+  at line 1, column 5
+    x = undefined_var
+        ^^^^^^^^^^^^^
 ```
 
-### Generators
-- [ ] `yield` that actually creates Python generators
+### Generators - IMPLEMENTED (has bug)
+- [x] `yield` creates Python generators
+- [ ] BUG: `for i in [1..3]` doesn't work correctly (preexisting parser bug)
 - [ ] `yield from` equivalent
 - [ ] Generator expressions
 
 ```coffee
-# Not implemented yet
-gen = -> 
-  for i in [1..10]
-    yield i
+# Works:
+gen = ->
+  yield 1
+  yield 2
+  yield 3
 
 for x in gen()
   print x
+# → 1, 2, 3 ✅
+
+# BUG - doesn't work:
+gen = ->
+  for i in [1..3]
+    yield i
+# → yields [1,2,3] instead of 1, 2, 3
 ```
+
+---
+
+## High Priority (When Bored)
+
+### Fix Range in For Loop - BUG
+- [ ] `for i in [1..3]` should iterate 1, 2, 3 not [1,2,3]
+
+```coffee
+# Current (BUG):
+for i in [1..3]
+  print i
+# → [1, 2, 3] (single value)
+
+# Expected:
+for i in [1..3]
+  print i
+# → 1, 2, 3 (three values)
+```
+
+**Root cause:** Parser wraps `RangeLiteral` in `ArrayLiteral` when inside `[]`.
+
+### Generator Enhancements
+- [ ] Fix generators with for loops (depends on range bug fix)
+- [ ] `yield from` equivalent
+- [ ] Generator expressions
+
+---
 
 ## Medium Priority (Maybe Someday)
 
@@ -81,6 +109,8 @@ for x from iterable
 # Not implemented yet
 result = [a, rest... for x in items]
 ```
+
+---
 
 ## Low Priority (Probably Never)
 
