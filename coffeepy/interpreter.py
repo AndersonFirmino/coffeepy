@@ -850,24 +850,19 @@ class Interpreter:
                         self._execute(statement)
                 elif isinstance(statement, ForInStmt):
                     for val in self._evaluate_as_generator(statement):
-                        if val is not None:
-                            yield val
+                        yield val
                 elif isinstance(statement, ForOfStmt):
                     for val in self._evaluate_as_generator(statement):
-                        if val is not None:
-                            yield val
+                        yield val
                 elif isinstance(statement, WhileStmt):
                     for val in self._evaluate_as_generator(statement):
-                        if val is not None:
-                            yield val
+                        yield val
                 elif isinstance(statement, IfExpr):
                     for val in self._evaluate_as_generator(statement):
-                        if val is not None:
-                            yield val
+                        yield val
                 elif isinstance(statement, TryStmt):
                     for val in self._evaluate_as_generator(statement):
-                        if val is not None:
-                            yield val
+                        yield val
                 elif hasattr(statement, 'body') and contains_yield(statement.body):
                     for val in self._evaluate_as_generator(statement.body):
                         yield val
