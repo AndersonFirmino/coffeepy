@@ -29,53 +29,31 @@ Undefined identifier 'undefined_var'.
         ^^^^^^^^^^^^^
 ```
 
-### Generators - IMPLEMENTED (has bug)
+### Generators - DONE
 - [x] `yield` creates Python generators
-- [ ] BUG: `for i in [1..3]` doesn't work correctly (preexisting parser bug)
-- [ ] `yield from` equivalent
-- [ ] Generator expressions
+- [x] `yield null` works correctly
+- [x] Generators in for loops work
 
 ```coffee
-# Works:
 gen = ->
-  yield 1
-  yield 2
-  yield 3
+  for i in [1..3]
+    yield i * 2
 
 for x in gen()
   print x
-# → 1, 2, 3 ✅
-
-# BUG - doesn't work:
-gen = ->
-  for i in [1..3]
-    yield i
-# → yields [1,2,3] instead of 1, 2, 3
+# → 2, 4, 6 ✅
 ```
+
+### Range in For Loop - DONE
+- [x] `for i in [1..3]` iterates 1, 2, 3
+- [x] Works with step: `[1..10 by 2]`
+- [x] Works descending: `[10..1]`
 
 ---
 
 ## High Priority (When Bored)
 
-### Fix Range in For Loop - BUG
-- [ ] `for i in [1..3]` should iterate 1, 2, 3 not [1,2,3]
-
-```coffee
-# Current (BUG):
-for i in [1..3]
-  print i
-# → [1, 2, 3] (single value)
-
-# Expected:
-for i in [1..3]
-  print i
-# → 1, 2, 3 (three values)
-```
-
-**Root cause:** Parser wraps `RangeLiteral` in `ArrayLiteral` when inside `[]`.
-
 ### Generator Enhancements
-- [ ] Fix generators with for loops (depends on range bug fix)
 - [ ] `yield from` equivalent
 - [ ] Generator expressions
 
