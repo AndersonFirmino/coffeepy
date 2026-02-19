@@ -10,7 +10,7 @@ print "You are #{age} years old."
 # Expressions in interpolation
 print "Next year you'll be #{age + 1}"
 print "2 + 2 = #{2 + 2}"
-print "Your name has #{name.length} characters"
+print "Your name has #{len(name)} characters"
 
 # Multiple interpolations
 print "#{name} is #{age} years old and lives in #{'NYC'}"
@@ -35,7 +35,7 @@ print literal
 
 # Complex expressions
 items = [1, 2, 3, 4, 5]
-print "Sum of #{items} is #{items.reduce((a, b) -> a + b, 0)}"
+print "Sum of #{items} is #{sum(items)}"
 
 # Conditional in interpolation
 score = 85

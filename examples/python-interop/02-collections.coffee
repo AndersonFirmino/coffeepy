@@ -39,12 +39,12 @@ print "Evens: #{evens}"
 
 # Sorting
 unsorted = [3, 1, 4, 1, 5, 9, 2, 6]
-sorted = unsorted.sorted()
-print "Sorted: #{sorted}"
+sorted_list = sorted(unsorted)
+print "Sorted: #{sorted_list}"
 
 # Reversed
-reversed = sorted.reversed()
-print "Reversed: #{reversed}"
+reversed_list = list(reversed(sorted_list))
+print "Reversed: #{reversed_list}"
 
 # Dictionary operations
 person = {name: "Alice", age: 30, city: "NYC"}

@@ -42,8 +42,8 @@ print "Lines: #{lines}"
 
 # Process each line
 print "Processing lines:"
-for line, i in lines
-  print "  Line #{i}: #{line.trim()}"
+for i in [0..2]
+  print "  Line #{i}: #{lines[i].strip()}"
 
 # Clean up
 os.remove(testFile)

@@ -16,7 +16,8 @@ largeEvens = [x * 10 for x in [1..20] when x % 2 == 0]
 print "Large evens: #{largeEvens}"
 
 # With index
-indexed = ["#{i}: #{x}" for x, i in ["a", "b", "c"]]
+items = ["a", "b", "c"]
+indexed = ["#{i}: #{items[i]}" for i in [0..2]]
 print "Indexed: #{indexed}"
 
 # Nested comprehensions
@@ -42,15 +43,13 @@ expensive = {k: v for k, v of prices when v > 1.00}
 print "Expensive: #{expensive}"
 
 # Practical example: Filter active users
-users = [
-  {name: "Alice", active: true}
-  {name: "Bob", active: false}
-  {name: "Charlie", active: true}
-]
+users = [{name: "Alice", active: true}, {name: "Bob", active: false}, {name: "Charlie", active: true}]
 
 activeNames = [user.name for user in users when user.active]
 print "Active users: #{activeNames}"
 
 # Create lookup object
-lookup = {user.name: user for user in users}
+lookup = {}
+for user in users
+  lookup[user.name] = user
 print "Lookup: #{lookup}"

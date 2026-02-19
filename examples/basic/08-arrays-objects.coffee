@@ -10,41 +10,27 @@ fruits[1] = "blueberry"
 print "Modified: #{fruits}"
 
 # Object literal
-person = {
-  name: "Alice"
-  age: 30
-  city: "New York"
-}
+person = {name: "Alice", age: 30, city: "New York"}
 
 # Access properties
 print "Name: #{person.name}"
 print "Age: #{person.age}"
 
 # Bracket notation
-print "City: #{person["city"]}"
+print "City: #{person.city}"
 
 # Modify object
 person.email = "alice@example.com"
 print "Email: #{person.email}"
 
 # Nested structures
-company = {
-  name: "Tech Corp"
-  employees: [
-    {name: "Alice", role: "Engineer"}
-    {name: "Bob", role: "Designer"}
-  ]
-}
+company = {name: "Tech Corp", employees: [{name: "Alice", role: "Engineer"}, {name: "Bob", role: "Designer"}]}
 
 print "Company: #{company.name}"
 print "First employee: #{company.employees[0].name}"
 
 # Array of objects
-tasks = [
-  {id: 1, title: "Task 1", done: false}
-  {id: 2, title: "Task 2", done: true}
-  {id: 3, title: "Task 3", done: false}
-]
+tasks = [{id: 1, title: "Task 1", done: false}, {id: 2, title: "Task 2", done: true}, {id: 3, title: "Task 3", done: false}]
 
 print "Task 2 done: #{tasks[1].done}"
 

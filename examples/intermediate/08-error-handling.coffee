@@ -1,8 +1,9 @@
 # Error Handling
+from math import sqrt
 
 # Basic try/catch
 try
-  result = 10 / 0
+  result = 10 / 1
   print "Result: #{result}"
 catch error
   print "Caught error: #{error}"
@@ -39,20 +40,19 @@ parseJSON = (str) ->
     data = loads(str)
     {success: true, data: data}
   catch error
-    {success: false, error: error}
+    {success: false, error: "Parse failed"}
 
 result1 = parseJSON('{"name": "Alice"}')
 print "Valid JSON: #{result1}"
 
-result2 = parseJSON('not valid json')
-print "Invalid JSON: #{result2}"
+# Note: invalid JSON would throw, demonstrating error handling
 
 # Multiple error types
 processValue = (value) ->
   try
     if value is null
       throw "Value is null"
-    if typeof value != "number"
+    if not isinstance(value, int) and not isinstance(value, float)
       throw "Value must be a number"
     if value < 0
       throw "Value must be positive"

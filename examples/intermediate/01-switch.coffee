@@ -53,7 +53,7 @@ print "Category: #{category}"
 value = [1, 2, 3]
 type = switch
   when value is null then "null"
-  when typeof value == "object" then "object"
+  when isinstance(value, list) then "list"
   else "other"
 
 print "Type: #{type}"

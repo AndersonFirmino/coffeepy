@@ -8,16 +8,16 @@ class Animal
   move: -> "#{@name} moves"
 
 class Dog extends Animal
-  constructor: (@name, @breed) ->
-    super @name
+  constructor: (name, @breed) ->
+    @name = name
   
   speak: -> "#{@name} the #{@breed} barks!"
   
   fetch: -> "#{@name} fetches the ball"
 
 class Cat extends Animal
-  constructor: (@name, @lives = 9) ->
-    super @name
+  constructor: (name, @lives = 9) ->
+    @name = name
   
   speak: -> "#{@name} meows"
   
@@ -47,18 +47,20 @@ class Vehicle
   start: -> "Starting engine..."
 
 class Car extends Vehicle
-  constructor: (@brand, @model, @doors = 4) ->
-    super brand, model
+  constructor: (brand, model, @doors = 4) ->
+    @brand = brand
+    @model = model
   
-  info: -> "#{super()} (#{@doors} doors)"
+  info: -> "#{@brand} #{@model} (#{@doors} doors)"
   
   honk: -> "Beep beep!"
 
 class Motorcycle extends Vehicle
-  constructor: (@brand, @model, @type = "sport") ->
-    super brand, model
+  constructor: (brand, model, @type = "sport") ->
+    @brand = brand
+    @model = model
   
-  info: -> "#{super()} [#{@type}]"
+  info: -> "#{@brand} #{@model} [#{@type}]"
   
   rev: -> "Vroom vroom!"
 

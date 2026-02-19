@@ -34,18 +34,18 @@ class EventEmitter
   constructor: ->
     @listeners = {}
   
-  on: (event, handler) =>
+  addHandler: (event, handler) ->
     @listeners[event] ?= []
-    @listeners[event].push(handler)
+    @listeners[event].append(handler)
   
-  emit: (event, data) =>
+  trigger: (event, data) ->
     handlers = @listeners[event] ? []
     for handler in handlers
       handler(data)
 
 emitter = new EventEmitter()
-emitter.on("test", (msg) -> print "Received: #{msg}")
-emitter.emit("test", "Hello!")
+emitter.addHandler("test", (msg) -> print "Received: #{msg}")
+emitter.trigger("test", "Hello!")
 
 # Counter with bound methods
 class Counter

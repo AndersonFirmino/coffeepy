@@ -42,11 +42,6 @@ else
 
 # Multiple conditions
 score = 85
-grade = 
-  if score >= 90 then "A"
-  else if score >= 80 then "B"
-  else if score >= 70 then "C"
-  else if score >= 60 then "D"
-  else "F"
+grade = if score >= 90 then "A" else if score >= 80 then "B" else if score >= 70 then "C" else if score >= 60 then "D" else "F"
 
 print "Grade: #{grade}"

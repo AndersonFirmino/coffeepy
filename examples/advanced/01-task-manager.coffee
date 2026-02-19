@@ -28,7 +28,7 @@ class TaskManager
   
   addTask: (title, priority) ->
     task = new Task(title, priority)
-    @tasks.push(task)
+    @tasks.append(task)
     task
   
   completeTask: (id) ->
@@ -52,8 +52,8 @@ class TaskManager
       print task.toString()
   
   summary: ->
-    total = @tasks.length
-    completed = @getCompleted().length
+    total = len(@tasks)
+    completed = len(@getCompleted())
     pending = total - completed
     
     """

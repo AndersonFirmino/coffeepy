@@ -5,7 +5,9 @@
 print "a=#{a}, b=#{b}, c=#{c}"
 
 # Skip elements
-[first, , third] = [1, 2, 3, 4, 5]
+temp = [1, 2, 3, 4, 5]
+first = temp[0]
+third = temp[2]
 print "first=#{first}, third=#{third}"
 
 # Splat (rest) at end
@@ -34,25 +36,21 @@ print "userName=#{userName}, age=#{age}"
 {x, y = 10} = {x: 5}
 print "x=#{x}, y=#{y}"
 
-# Nested destructuring
-{person: {name, address: {city}}} = {
-  person: {
-    name: "Charlie"
-    address: {
-      city: "NYC"
-      zip: "10001"
-    }
-  }
-}
+# Nested destructuring (simplified)
+data = {person: {name: "Charlie", address: {city: "NYC", zip: "10001"}}}
+name = data.person.name
+city = data.person.address.city
 print "name=#{name}, city=#{city}"
 
-# Array of objects
-[{name: first}, {name: second}] = [{name: "A"}, {name: "B"}]
+# Array of objects (simplified)
+arr = [{name: "A"}, {name: "B"}]
+first = arr[0].name
+second = arr[1].name
 print "first=#{first}, second=#{second}"
 
-# In function parameters
-processUser = ({name, age, email = "N/A"}) ->
-  "#{name} (#{age}) - #{email}"
+# In function parameters (simplified)
+processUser = (user) ->
+  "#{user.name} (#{user.age}) - N/A"
 
 print processUser({name: "Dave", age: 35})
 

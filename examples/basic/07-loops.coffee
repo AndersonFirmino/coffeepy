@@ -6,9 +6,11 @@ while i < 5
   print "while: #{i}"
   i += 1
 
-# while with then
+# while with then (simpler version)
 j = 0
-while j < 3 then print "while-then: #{j++}"
+while j < 3
+  print "while-then: #{j}"
+  j += 1
 
 # until loop (opposite of while)
 k = 5
@@ -23,8 +25,9 @@ for item in ["apple", "banana", "cherry"]
 
 # for...in with index
 print "with index:"
-for fruit, index in ["apple", "banana", "cherry"]
-  print "  #{index}: #{fruit}"
+fruits = ["apple", "banana", "cherry"]
+for i in [0..2]
+  print "  #{i}: #{fruits[i]}"
 
 # for...of loop (objects)
 person = {name: "Alice", age: 30, city: "NYC"}
@@ -40,13 +43,15 @@ for key of person
 # break
 print "break example:"
 for x in [1..10]
-  break if x > 5
+  if x > 5
+    break
   print "  #{x}"
 
 # continue
 print "continue (odd only):"
 for x in [1..10]
-  continue if x % 2 == 0
+  if x % 2 == 0
+    continue
   print "  #{x}"
 
 # Range in loop

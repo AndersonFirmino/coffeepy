@@ -52,8 +52,8 @@ print "a isnt c: #{a isnt c}"   # true
 print "a is c: #{a is c}"       # false
 
 # is not combination
-print "a is not b: #{a is not b}"  # false
-print "a is not c: #{a is not c}"  # true
+print "a is not b: #{not (a is b)}"  # false
+print "a is not c: #{not (a is c)}"  # true
 
 # Chained comparisons
 x = 15
@@ -78,5 +78,6 @@ print "Custom port: #{config}"
 
 # Conditional update
 items = []
-items.push("first") if items.length == 0
+if len(items) == 0
+  items.append("first")
 print "Items: #{items}"
