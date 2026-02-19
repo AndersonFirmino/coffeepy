@@ -1,3 +1,25 @@
+"""
+CoffeePy - Main Entry Point
+============================
+
+This module provides the CLI and REPL for CoffeePy, a CoffeeScript dialect
+that runs directly on Python.
+
+Usage:
+    python -m coffeepy script.coffee      # Run a file
+    python -m coffeepy -i                  # Start REPL
+    python -m coffeepy -e "print 1 + 2"    # Evaluate code
+
+Commands in REPL:
+    .exit   - Exit the REPL
+    .help   - Show help
+    .clear  - Clear input buffer
+
+Author: Anderson Firmino
+License: MIT
+Version: 1.1.0
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -9,6 +31,11 @@ from .interpreter import Interpreter
 
 
 def repl() -> int:
+    """Start an interactive REPL session.
+    
+    Returns:
+        Exit code (0 for success)
+    """
     print("CoffeePy REPL (Python-first CoffeeScript)")
     print("Type .exit to quit, .help for help")
     print()
@@ -95,7 +122,15 @@ def repl() -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="coffeepy")
+    """Main entry point for the CLI.
+    
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    parser = argparse.ArgumentParser(
+        prog="coffeepy",
+        description="CoffeePy - CoffeeScript that runs on Python"
+    )
     parser.add_argument("-e", "--eval", dest="eval_code", help="Evaluate Coffee source from a string")
     parser.add_argument("-i", "--interactive", action="store_true", help="Start REPL")
     parser.add_argument("file", nargs="?", help="Path to a .coffee file")
