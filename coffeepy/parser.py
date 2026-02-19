@@ -1139,6 +1139,10 @@ class Parser:
             self._consume(RBRACKET, "Expected ']' after comprehension.")
             return ComprehensionExpr(var_name, iterable, first_expr, filter_condition)
         
+        if isinstance(first_expr, RangeLiteral) and self._check(RBRACKET):
+            self._advance()
+            return first_expr
+        
         items.append(first_expr)
         while self._match(COMMA):
             if self._check(RBRACKET):
