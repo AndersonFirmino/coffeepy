@@ -168,7 +168,7 @@ x isnt y   # x != y
 | Category | Features |
 |:--------:|:---------|
 | **Core** | Variables, scoping, arithmetic, comparison, logical operators, assignments |
-| **Functions** | Arrow `->`, fat arrow `=>`, default params, rest params `...`, closures |
+| **Functions** | Arrow `->`, fat arrow `=>`, default params, rest params `...`, closures, generators `yield` |
 | **Classes** | `class`, `extends`, `super`, `new`, `constructor`, `::` prototype access |
 | **Control** | `if/then/else`, `unless`, `switch/when/else`, `while`, `until`, `for in`, `for of` |
 | **Data** | Arrays, objects, destructuring, splats, comprehensions |
@@ -182,10 +182,11 @@ x isnt y   # x != y
 
 ```bash
 python -m coffeepy.tests
+python -m unittest tests/test_new_features.py
 ```
 
 ```
-Ran 177 tests in 0.070s
+Ran 198 tests in 0.203s
 OK
 ```
 
