@@ -182,11 +182,10 @@ x isnt y   # x != y
 
 ```bash
 python -m coffeepy.tests
-python -m unittest tests/test_new_features.py
 ```
 
 ```
-Ran 198 tests in 0.203s
+Ran 198 tests in 0.129s
 OK
 ```
 
