@@ -6,7 +6,7 @@
 
 Write CoffeeScript syntax • Execute with Python runtime • Use the entire Python ecosystem
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/AndersonFirmino/coffeepy)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/AndersonFirmino/coffeepy)
 [![Python](https://img.shields.io/badge/python-3.10%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
